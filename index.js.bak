@@ -1,0 +1,89 @@
+require('dotenv').config();
+const venom = require('venom-bot');
+const fs = require('fs');
+const express = require('express');
+const bodyParser = require('body-parser');
+const dayjs = require('dayjs');
+const { body: bodyValidator, validationResult } = require('express-validator');
+const kue = require('kue'),
+	queue = kue.createQueue();
+
+const rawBodySaver = function(req, res, buf, encoding) {
+	if (buf && buf.length) {
+		req.rawBody = buf.toString(encoding || 'utf8');
+	}
+};
+const testInterval = ({ phone }) => {
+	console.log('Hello!!!!', phone);
+};
+const start = async () => {
+	console.log('Start server...');
+	let app = express();
+	app.use(bodyParser.json({ verify: rawBodySaver }));
+	app.use(bodyParser.urlencoded({ verify: rawBodySaver, extended: true }));
+	app.use(
+		bodyParser.raw({
+			verify: rawBodySaver,
+			type: () => true
+		})
+	);
+	app.post('/login', async (req, res) => {
+		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'GET /login');
+		const { session } = req.body;
+		await venom.create(session, (base64Qr, asciiQR) => {
+			// To write it somewhere else in a file
+			exportQR(base64Qr, `${session}.png`);
+		});
+		return res.send('done!');
+	});
+
+	/**
+   * /send-message
+   * params:
+   * @param phone => target phone for whatsapp
+   * @param message => message for whatsapp
+   * @param delay => delay message whatsapp /s
+   */
+	app.post(
+		'/send-message',
+		[
+			bodyValidator('session').notEmpty().withMessage('session cannot be empty!'),
+			bodyValidator('phone').notEmpty().withMessage('phone cannot be empty!'),
+			bodyValidator('message').notEmpty().withMessage('message cannot be empty!'),
+			bodyValidator('delay').notEmpty().withMessage('delay cannot be empty!')
+		],
+		async (req, res) => {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(400).json({ errors: errors.array() });
+			}
+			const { phone, message, delay, session } = req.body;
+			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'POST /send-message');
+      const phones = phone.split(',');
+      //const client = await venom.create(session);
+			for (const number of phones) {
+        await venom.sendText(number, message);
+			}
+			// for (const number of phones) {
+			// 	setInterval(testInterval, delay, { phone });
+			// }
+			return res.send('done!');
+		}
+	);
+
+	const PORT = process.env.API_PORT || 3000;
+	const serverAfterListening = app.listen(PORT, () => {
+		console.log(`WhatsApp API server running on port ${PORT}.`);
+	});
+	serverAfterListening.setTimeout(600000);
+};
+
+// Writes QR in specified path
+const exportQR = (qrCode, path) => {
+	qrCode = qrCode.replace('data:image/png;base64,', '');
+	const imageBuffer = Buffer.from(qrCode, 'base64');
+	// Creates 'marketing-qr.png' file
+	fs.writeFileSync(path, imageBuffer);
+};
+
+start();
