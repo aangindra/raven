@@ -37,7 +37,10 @@ const start = async () => {
 			verify: rawBodySaver,
 			type: () => true
 		})
-	);
+  );
+  app.get('/', async(req, res) => {
+    return res.status(200).json({ message: "Welcome to API Raven 1.0.0" })
+  })
 	app.post(
 		'/login_whatsapp',
 		verifyToken,
