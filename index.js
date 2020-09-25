@@ -51,49 +51,53 @@ const start = async () => {
 				return res.status(400).json({ errors: errors.array() });
 			}
 			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'POST /login');
-			const { session } = req.body;
-			const venomOptions = {
-				headless: true, // Headless chrome
-				devtools: false, // Open devtools by default
-				useChrome: true, // If false will use Chromium instance
-				debug: false, // Opens a debug session
-				logQR: true, // Logs QR automatically in terminal
-				browserArgs: [ '' ], // Parameters to be added into the chrome browser instance
-				refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
-				autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
-				disableSpins: true // Will disable Spinnies animation, useful for containers (docker) for a better log
-			};
-			const client = await new Promise((resolve, reject) => {
-				venom.create(
-					session,
-					(base64Qr) => {
-						if (!existsSync(`./log_qr`)) {
-							mkdirSync(`./log_qr`, { recursive: true });
-						}
-						exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
-						resolve(base64Qr);
-					},
-					(statusFind) => {
-						if (statusFind === 'isLogged') {
-							resolve(statusFind);
-						}
-					},
-					venomOptions
-				);
-			});
-			if (client === 'isLogged') {
-				await collection('Devices').updateOne(
-					{
-						phone: session
-					},
-					{
-						$set: {
-							status: 'CONNECTED'
-						}
-					}
-				);
-				return res.status(200).json({ message: 'Success login!', status: client, qrCode: '' });
-			}
+      const { session } = req.body;
+      try{
+        const venomOptions = {
+          headless: true, // Headless chrome
+          devtools: false, // Open devtools by default
+          useChrome: true, // If false will use Chromium instance
+          debug: false, // Opens a debug session
+          logQR: true, // Logs QR automatically in terminal
+          browserArgs: [ '' ], // Parameters to be added into the chrome browser instance
+          refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
+          autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
+          disableSpins: true // Will disable Spinnies animation, useful for containers (docker) for a better log
+        };
+        const client = await new Promise((resolve, reject) => {
+          venom.create(
+            session,
+            (base64Qr) => {
+              if (!existsSync(`./log_qr`)) {
+                mkdirSync(`./log_qr`, { recursive: true });
+              }
+              exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
+              resolve(base64Qr);
+            },
+            (statusFind) => {
+              if (statusFind === 'isLogged') {
+                resolve(statusFind);
+              }
+            },
+            venomOptions
+          );
+        });
+        if (client === 'isLogged') {
+          await collection('Devices').updateOne(
+            {
+              phone: session
+            },
+            {
+              $set: {
+                status: 'CONNECTED'
+              }
+            }
+          );
+          return res.status(200).json({ message: 'Success login!', status: client, qrCode: '' });
+        }
+      }catch(e) {
+        console.log(e)
+      }
 			return res.status(200).json({ message: 'Success login!', status: 'notLogged', qrCode: client });
 		}
 	);
