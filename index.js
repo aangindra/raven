@@ -110,10 +110,10 @@ const start = async () => {
 					);
 					return res.status(200).json({ message: 'Success login!', status: client, qrCode: '' });
 				}
+        return res.status(200).json({ message: 'Success login!', status: 'notLogged', qrCode: client });
 			} catch (e) {
 				console.log(e);
 			}
-			return res.status(200).json({ message: 'Success login!', status: 'notLogged', qrCode: client });
 		}
 	);
 	app.post(
