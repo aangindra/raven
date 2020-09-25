@@ -27,24 +27,22 @@ const start = async () => {
     autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
     disableSpins: true // Will disable Spinnies animation, useful for containers (docker) for a better log
   };
-  const client = await new Promise((resolve, reject) => {
-    venom.create(
-      "6282821818282",
-      (base64Qr) => {
-        if (!existsSync(`./log_qr`)) {
-          mkdirSync(`./log_qr`, { recursive: true });
-        }
-        exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
-        resolve(base64Qr);
-      },
-      (statusFind) => {
-        if (statusFind === 'isLogged') {
-          resolve(statusFind);
-        }
-      },
-      venomOptions
-    );
-  });
+  const client = await venom.create(
+    "6282821818282",
+    (base64Qr) => {
+      if (!existsSync(`./log_qr`)) {
+        mkdirSync(`./log_qr`, { recursive: true });
+      }
+      exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
+      resolve(base64Qr);
+    },
+    (statusFind) => {
+      if (statusFind === 'isLogged') {
+        resolve(statusFind);
+      }
+    },
+    venomOptions
+  );
   return client
 }
 start();
