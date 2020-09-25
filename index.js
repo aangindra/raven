@@ -58,7 +58,7 @@ const start = async () => {
 					devtools: false, // Open devtools by default
 					useChrome: true, // If false will use Chromium instance
 					debug: false, // Opens a debug session
-					logQR: true, // Logs QR automatically in terminal
+					logQR: false, // Logs QR automatically in terminal
 					browserArgs: [ '--no-sandbox' ], // Parameters to be added into the chrome browser instance
 					refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
 					autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
