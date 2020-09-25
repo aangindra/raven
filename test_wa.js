@@ -29,7 +29,7 @@ const start = async () => {
   };
   const client = await new Promise((resolve, reject) => {
     venom.create(
-      session,
+      "6282821818282",
       (base64Qr) => {
         if (!existsSync(`./log_qr`)) {
           mkdirSync(`./log_qr`, { recursive: true });
@@ -45,5 +45,6 @@ const start = async () => {
       venomOptions
     );
   });
+  return 'successs'
 }
 start();
