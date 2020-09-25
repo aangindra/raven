@@ -85,7 +85,8 @@ const start = async () => {
 								if (err != null) {
 									console.log(err);
 								}
-							});
+              });
+              resolve(base64Qr)
 						},
 						(statusSession) => {
 							console.log('Status Session: ', statusSession);
