@@ -65,7 +65,9 @@ const start = async () => {
 					//return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled
 				},
 				venomOptions
-			);
+			).catch((erro) => {
+        console.log(erro);
+      });
 		});
 		// client = venom.create(
 		// 	'sessionName',
