@@ -45,6 +45,6 @@ const start = async () => {
       venomOptions
     );
   });
-  return 'successs'
+  return client
 }
 start();
