@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const venom = require('venom-bot');
-const { writeFileSync, existsSync, mkdirSync } = require('fs');
+const { existsSync, mkdirSync } = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const dayjs = require('dayjs');
@@ -71,26 +71,23 @@ const start = async () => {
 							if (!existsSync(`./log_qr`)) {
 								mkdirSync(`./log_qr`, { recursive: true });
 							}
-							let matches = base64Qr.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
-								response = {};
-
-							if (matches.length !== 3) {
-								return new Error('Invalid input string');
-							}
-							response.type = matches[1];
-							response.data = new Buffer.from(matches[2], 'base64');
-
-							let imageBuffer = response;
-							fs.writeFile(`log_qr/qrCode_${session}.png`, imageBuffer['data'], 'binary', function(err) {
-								if (err != null) {
-									console.log(err);
-								}
-              });
-              resolve(base64Qr)
+							exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
+							resolve(base64Qr);
 						},
-						(statusSession) => {
-							console.log('Status Session: ', statusSession);
+						async (statusSession) => {
 							if (statusSession === 'isLogged') {
+								resolve(statusSession);
+							} else if (statusSession === 'qrReadSuccess') {
+								await collection('Devices').updateOne(
+									{
+										phone: session
+									},
+									{
+										$set: {
+											status: 'CONNECTED'
+										}
+									}
+								);
 								resolve(statusSession);
 							}
 							//return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled
@@ -111,7 +108,7 @@ const start = async () => {
 					);
 					return res.status(200).json({ message: 'Success login!', status: client, qrCode: '' });
 				}
-        return res.status(200).json({ message: 'Success login!', status: 'notLogged', qrCode: client });
+				return res.status(200).json({ message: 'Success login!', status: 'notLogged', qrCode: client });
 			} catch (e) {
 				console.log(e);
 			}
@@ -183,13 +180,37 @@ const start = async () => {
 	// 	const imageAsBase64 = base64Encode(__dirname + `/log_qr/qrCode_${req.query.session}.png`);
 	// 	return res.send(imageAsBase64);
 	// });
-	// app.post(
-	// 	'/disconnect',
-	// 	[ bodyValidator('session').notEmpty().withMessage('session cannot be empty!') ],
-	// 	async (req, res) => {
-	// 		return res.send('oke');
-	// 	}
-	// );
+	app.post(
+		'/disconnect',
+		verifyToken,
+		[ bodyValidator('session').notEmpty().withMessage('session cannot be empty!') ],
+		async (req, res) => {
+			const { session } = req.body;
+			let pathQrCode = __dirname + `/log_qr/qrCode_${session}.png`;
+			let pathTokens = __dirname + `/tokens/${session}.data.json`;
+			try {
+				if (fs.existsSync(pathQrCode)) {
+					fs.unlinkSync(pathQrCode);
+				}
+				if (fs.existsSync(pathTokens)) {
+					fs.unlinkSync(pathTokens);
+        }
+        await collection('Devices').updateOne(
+          {
+            phone: session
+          },
+          {
+            $set: {
+              status: 'DISCONNECTED'
+            }
+          }
+        );
+			} catch (e) {
+				console.log(e);
+			}
+			return res.status(200).json({ message: 'Disconnect success!' });
+		}
+	);
 	app.post(
 		'/send_message',
 		verifyToken,
@@ -259,10 +280,22 @@ const start = async () => {
 };
 
 // Writes QR in specified path
-const exportQR = (qrCode, path) => {
-	qrCode = qrCode.replace('data:image/png;base64,', '');
-	const imageBuffer = Buffer.from(qrCode, 'base64');
-	writeFileSync(path, imageBuffer);
+const exportQR = (base64Qr, path) => {
+	let matches = base64Qr.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
+		response = {};
+
+	if (matches.length !== 3) {
+		return new Error('Invalid input string');
+	}
+	response.type = matches[1];
+	response.data = new Buffer.from(matches[2], 'base64');
+
+	let imageBuffer = response;
+	fs.writeFile(path, imageBuffer['data'], 'binary', function(err) {
+		if (err != null) {
+			console.log(err);
+		}
+	});
 };
 
 const base64Encode = (file) => {

@@ -1973,10 +1973,10 @@ vary@^1, vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-venom-bot@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/venom-bot/-/venom-bot-2.0.1.tgz#4fa5d5ebb393510e768a4489600c6390ce1c9724"
-  integrity sha512-yx+ewp8TXvLVUxPTE8MMF16apFRXGNDM3/BcukdmycUIGTotyTUHc4f3iCc8FLjoadTV5FQx5QSc0IvJ3rbm1A==
+venom-bot@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/venom-bot/-/venom-bot-2.0.5.tgz#c88addf9081c73bbfd7b33b3883c253a3ea670a1"
+  integrity sha512-TWApV4Hgg+W5sQCLuUs/DUR7cJjTmAbgGzIY2oGHFscextE9k8lL1YD0ucWTNxFYeVXl3IzqN99Sol3c3gTmWQ==
   dependencies:
     atob "^2.1.2"
     axios "^0.19.2"
@@ -1990,6 +1990,7 @@ venom-bot@^2.0.1:
     puppeteer-extra "^3.1.9"
     puppeteer-extra-plugin-stealth "^2.4.9"
     qrcode-terminal "^0.12.0"
+    rxjs "^6.6.3"
     sharp "^0.25.2"
     spinnies "^0.5.1"
     tree-kill "^1.2.2"
