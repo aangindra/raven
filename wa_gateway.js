@@ -74,7 +74,8 @@ const sendMessage = async (client, collection) => {
 			console.log(e);
 		}
 		return false;
-	}
+  }
+  console.log(client)
 	if (!foundMessage) {
 		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'not found message...');
 		return false;
