@@ -58,8 +58,8 @@ const sendMessage = async (client, collection) => {
 	});
 
 	if (!client) {
-    console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Device not connected!');
-    await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
+		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Device not connected!');
+		await updateStatusDevice(WA_SESSION, 'DISCONNECTED', collection);
 		// delete file qr and token
 		let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
 		let pathTokens = __dirname + `/tokens/${WA_SESSION}.data.json`;
@@ -156,6 +156,18 @@ const sendMessage = async (client, collection) => {
 			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `message for ${foundMessage.phone} is sent!`);
 		}
 	} catch (e) {
+		await collection('Messages').updateOne(
+			{
+				_id: foundMessage._id
+			},
+			{
+				$set: {
+					errorMessage: "error venom",
+					errorAt: dayjs().toISOString(),
+					_updatedAt: dayjs().toISOString()
+				}
+			}
+		);
 		console.log(e);
 	}
 	return true;
@@ -177,8 +189,8 @@ const sendMessageSchedule = async (client, collection) => {
 	});
 
 	if (!client) {
-    console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Device not connected!');
-    await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
+		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Device not connected!');
+		await updateStatusDevice(WA_SESSION, 'DISCONNECTED', collection);
 		// delete file qr and token
 		let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
 		let pathTokens = __dirname + `/tokens/${WA_SESSION}.data.json`;
@@ -279,6 +291,18 @@ const sendMessageSchedule = async (client, collection) => {
 			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `message for ${foundMessage.phone} is sent!`);
 		}
 	} catch (e) {
+		await collection('Messages').updateOne(
+			{
+				_id: foundMessage._id
+			},
+			{
+				$set: {
+					errorMessage: "error venom",
+					errorAt: dayjs().toISOString(),
+					_updatedAt: dayjs().toISOString()
+				}
+			}
+		);
 		console.log(e);
 	}
 	return true;
@@ -305,13 +329,16 @@ const exportQR = (qrCode, path) => {
 };
 
 const updateStatusDevice = async (phone, status, collection) => {
-  await collection("Devices").updateOne({
-    phone
-  },{
-    $set: {
-      status
-    }
-  })
-}
+	await collection('Devices').updateOne(
+		{
+			phone
+		},
+		{
+			$set: {
+				status
+			}
+		}
+	);
+};
 
 start();
