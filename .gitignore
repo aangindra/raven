@@ -1,7 +1,9 @@
 .env
 node_modules/
+/node_modules
 release/
 .DS_Store
 *.xlsx
 log_qr/
 tokens/
+/tokens
