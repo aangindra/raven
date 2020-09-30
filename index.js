@@ -13,6 +13,7 @@ const path = require('path');
 const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const shell = require('shelljs');
 const { verifyToken, authenticate } = require('./auth/verifyToken');
 
 const start = async () => {
@@ -54,16 +55,17 @@ const start = async () => {
 			const { session } = req.body;
 			try {
 				const venomOptions = {
-					headless: true, // Headless chrome
-					devtools: false, // Open devtools by default
-					useChrome: true, // If false will use Chromium instance
-					debug: false, // Opens a debug session
-					logQR: false, // Logs QR automatically in terminal
-					browserArgs: [ '--no-sandbox' ], // Parameters to be added into the chrome browser instance
-					refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
-					autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
-					disableSpins: true // Will disable Spinnies animation, useful for containers (docker) for a better log
-				};
+					headless: true,
+					devtools: false,
+					useChrome: true,
+					debug: false,
+					logQR: false,
+					browserArgs: [ '--no-sandbox' ],
+					refreshQR: 15000,
+					autoClose: false,
+					disableSpins: true,
+          disableWelcome: true,
+        };
 				const client = await new Promise((resolve, reject) => {
 					venom.create(
 						session,
@@ -87,10 +89,10 @@ const start = async () => {
 											status: 'CONNECTED'
 										}
 									}
-								);
+                );
+                shell.exec(`pm2 reload wa_${session}`);
 								resolve(statusSession);
 							}
-							//return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled
 						},
 						venomOptions
 					);

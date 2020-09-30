@@ -35,10 +35,28 @@ const start = async () => {
       disableWelcome: true,
       autoClose: 30000
 		}
-	);
+  );
+  client.onStateChange((state) => {
+    const conflits = [
+      venom.SocketState.CONFLICT,
+      venom.SocketState.UNPAIRED,
+      venom.SocketState.UNLAUNCHED,
+    ];
+    if (conflits.includes(state)) {
+      client.useHere();
+      if(state === "UNPAIRED"){
+        console.log("WA DISCONNECTED!");
+      }
+    }
+  });
+  const isConnected = await client.isConnected();
 	schedule.scheduleJob('*/10 * * * * *', async () => {
-		await sendMessage(client, collection);
-		await sendMessageSchedule(client, collection);
+    if(isConnected){
+      await sendMessage(client, collection);
+      await sendMessageSchedule(client, collection);
+    }else{
+      console.log("Whatsapp not connected!");
+    }
 	});
 	return 'success';
 };
