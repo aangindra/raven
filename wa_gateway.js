@@ -155,7 +155,7 @@ const sendMessage = async (client, collection) => {
 					});
 			});
 		} else {
-      await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+      result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		}
 
 		if (!result) {
