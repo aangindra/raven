@@ -32,7 +32,8 @@ const start = async () => {
 			refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
 			autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
 			disableSpins: true, // Will disable Spinnies animation, useful for containers (docker) for a better log
-			autoClose: 30000
+      disableWelcome: true,
+      autoClose: 30000
 		}
 	);
 	schedule.scheduleJob('*/10 * * * * *', async () => {
@@ -137,7 +138,7 @@ const sendMessage = async (client, collection) => {
 					});
 			});
 		} else {
-			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+      await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		}
 
 		if (!result) {
