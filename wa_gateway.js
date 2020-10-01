@@ -109,7 +109,7 @@ const sendMessage = async (client, collection) => {
 				},
 				{
 					$set: {
-						errorMessage: validPhone,
+						errorMessage: "Invalid phone number!",
 						errorAt: dayjs().toISOString(),
 						_updatedAt: dayjs().toISOString()
 					}
@@ -181,7 +181,7 @@ const sendMessage = async (client, collection) => {
 			},
 			{
 				$set: {
-					errorMessage: "error venom",
+					errorMessage: JSON.stringify(e),
 					errorAt: dayjs().toISOString(),
 					_updatedAt: dayjs().toISOString()
 				}

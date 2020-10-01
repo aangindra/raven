@@ -7,3 +7,4 @@ release/
 log_qr/
 tokens/
 /tokens
+*.tar.zst
