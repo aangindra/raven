@@ -5,6 +5,7 @@ const dayjs = require('dayjs');
 const schedule = require('node-schedule');
 const axios = require('axios');
 const fs = require('fs');
+const uuidV4 = require('uuid/v4');
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : 'default0';
 const mongodbConnection = require('./mongodb_connection');
 
@@ -32,31 +33,56 @@ const start = async () => {
 			refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
 			autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
 			disableSpins: true, // Will disable Spinnies animation, useful for containers (docker) for a better log
-      disableWelcome: true,
-      autoClose: 30000
+			disableWelcome: true,
+			autoClose: 30000
 		}
-  );
-  client.onStateChange((state) => {
-    const conflits = [
-      venom.SocketState.CONFLICT,
-      venom.SocketState.UNPAIRED,
-      venom.SocketState.UNLAUNCHED,
-    ];
-    if (conflits.includes(state)) {
-      client.useHere();
-      if(state === "UNPAIRED"){
-        console.log("WA DISCONNECTED!");
+	);
+	client.onStateChange((state) => {
+		const conflits = [ venom.SocketState.CONFLICT, venom.SocketState.UNPAIRED, venom.SocketState.UNLAUNCHED ];
+		if (conflits.includes(state)) {
+			client.useHere();
+			if (state === 'UNPAIRED') {
+				console.log('WA DISCONNECTED!');
+			}
+		}
+	});
+	client.onMessage(async (message) => {
+    const foundAutoReply = await collection("WhatsappAutoReplies").findOne({
+      sender: WA_SESSION
+    });
+    if(!foundAutoReply){
+      return
+    }
+		if (message.isGroupMsg === false) {
+      let receivedPhone = message.from;
+      try{
+        await collection('Messages').insertOne({
+          _id: uuidV4(),
+          sender: WA_SESSION,
+          phone: receivedPhone.replace(/\D/g,''),
+          checkSendByGroupContacts: false,
+          groupIds: [],
+          message: foundAutoReply.message,
+          type: 'TEXT',
+          file: '',
+          image: '',
+          isScheduled: false,
+          _createdAt: new Date().toISOString(),
+          _updatedAt: new Date().toISOString()
+        });
+      }catch(e){
+        console.log(e)
       }
-    }
-  });
-  const isConnected = await client.isConnected();
+		}
+	});
+	const isConnected = await client.isConnected();
 	schedule.scheduleJob('*/10 * * * * *', async () => {
-    if(isConnected){
-      await sendMessage(client, collection);
-      await sendMessageSchedule(client, collection);
-    }else{
-      console.log("Whatsapp not connected!");
-    }
+		if (isConnected) {
+			await sendMessage(client, collection);
+			await sendMessageSchedule(client, collection);
+		} else {
+			console.log('Whatsapp not connected!');
+		}
 	});
 	return 'success';
 };
@@ -93,7 +119,7 @@ const sendMessage = async (client, collection) => {
 			console.log(e);
 		}
 		return false;
-  }
+	}
 	if (!foundMessage) {
 		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'not found message...');
 		return false;
@@ -109,7 +135,7 @@ const sendMessage = async (client, collection) => {
 				},
 				{
 					$set: {
-						errorMessage: "Invalid phone number!",
+						errorMessage: 'Invalid phone number!',
 						errorAt: dayjs().toISOString(),
 						_updatedAt: dayjs().toISOString()
 					}
@@ -155,7 +181,7 @@ const sendMessage = async (client, collection) => {
 					});
 			});
 		} else {
-      result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		}
 
 		if (!result) {
@@ -289,9 +315,11 @@ const sendMessageSchedule = async (client, collection) => {
 						resolve(false);
 					});
 			});
-		} else {
+		} else if(foundMessage.type === 'AUTOREPLY') {
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
-		}
+		} else {
+      result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+    }
 
 		if (!result) {
 			console.warn(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Whatsapp not connected!');
@@ -316,7 +344,7 @@ const sendMessageSchedule = async (client, collection) => {
 			},
 			{
 				$set: {
-					errorMessage: "error venom",
+					errorMessage: JSON.stringify(e),
 					errorAt: dayjs().toISOString(),
 					_updatedAt: dayjs().toISOString()
 				}
