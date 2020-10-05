@@ -63,7 +63,7 @@ const start = async () => {
           checkSendByGroupContacts: false,
           groupIds: [],
           message: foundAutoReply.message,
-          type: 'TEXT',
+          type: 'AUTOREPLY',
           file: '',
           image: '',
           isScheduled: false,
