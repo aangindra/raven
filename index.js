@@ -267,8 +267,8 @@ const start = async () => {
 				newMessage.type = 'TEXT';
 			}
 			const phones = phone.split(',');
-			for (const number of phones) {
-				newMessage.phone = number;
+			for (let number of phones) {
+				newMessage.phone = number.replace(/[^0-9.]/g, "");
 				await collection('Messages').insertOne(newMessage);
 			}
 			return res.status(200).json({ message: 'Success send message!' });
