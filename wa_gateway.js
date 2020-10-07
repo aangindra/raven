@@ -47,32 +47,32 @@ const start = async () => {
 		}
 	});
 	client.onMessage(async (message) => {
-    const foundAutoReply = await collection("WhatsappAutoReplies").findOne({
-      sender: WA_SESSION
-    });
-    if(!foundAutoReply){
-      return
-    }
+		const foundAutoReply = await collection('WhatsappAutoReplies').findOne({
+			sender: WA_SESSION
+		});
+		if (!foundAutoReply) {
+			return;
+		}
 		if (message.isGroupMsg === false) {
-      let receivedPhone = message.from;
-      try{
-        await collection('Messages').insertOne({
-          _id: uuidV4(),
-          sender: WA_SESSION,
-          phone: receivedPhone.replace(/\D/g,''),
-          checkSendByGroupContacts: false,
-          groupIds: [],
-          message: foundAutoReply.message,
-          type: 'AUTOREPLY',
-          file: '',
-          image: '',
-          isScheduled: false,
-          _createdAt: new Date().toISOString(),
-          _updatedAt: new Date().toISOString()
-        });
-      }catch(e){
-        console.log(e)
-      }
+			let receivedPhone = message.from;
+			try {
+				await collection('Messages').insertOne({
+					_id: uuidV4(),
+					sender: WA_SESSION,
+					phone: receivedPhone.replace(/\D/g, ''),
+					checkSendByGroupContacts: false,
+					groupIds: [],
+					message: foundAutoReply.message,
+					type: 'AUTOREPLY',
+					file: '',
+					image: '',
+					isScheduled: false,
+					_createdAt: new Date().toISOString(),
+					_updatedAt: new Date().toISOString()
+				});
+			} catch (e) {
+				console.log(e);
+			}
 		}
 	});
 	const isConnected = await client.isConnected();
@@ -315,11 +315,11 @@ const sendMessageSchedule = async (client, collection) => {
 						resolve(false);
 					});
 			});
-		} else if(foundMessage.type === 'AUTOREPLY') {
+		} else if (foundMessage.type === 'AUTOREPLY') {
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		} else {
-      result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
-    }
+			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+		}
 
 		if (!result) {
 			console.warn(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Whatsapp not connected!');
