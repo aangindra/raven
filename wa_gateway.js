@@ -169,7 +169,7 @@ const sendMessage = async (client, collection) => {
 			const splitFilename = foundMessage.file.split('/');
 			const filename = splitFilename[splitFilename.length - 1];
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
-			result = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
 				client
 					.sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
 					.then((result) => {
@@ -218,7 +218,7 @@ const sendMessage = async (client, collection) => {
 	return true;
 };
 const sendMessageSchedule = async (client, collection) => {
-	const foundMessage = await collection('Messages').findOne({
+	const foundMessage = await collection('ScheduleMessages').findOne({
 		sender: WA_SESSION,
 		isScheduled: true,
 		$or: [
@@ -259,12 +259,12 @@ const sendMessageSchedule = async (client, collection) => {
 		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'message are still below schedule...');
 		return false;
 	} else {
-		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'));
+    console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `found message for ${foundMessage.phone}!`);
 	}
 	try {
 		const validPhone = await client.getNumberProfile(`${foundMessage.phone}@c.us`);
 		if (validPhone === 404) {
-			await collection('Messages').updateOne(
+			await collection('ScheduleMessages').updateOne(
 				{
 					_id: foundMessage._id
 				},
@@ -276,7 +276,7 @@ const sendMessageSchedule = async (client, collection) => {
 					}
 				}
 			);
-			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `${foundMessage.phone} not have whatsapp!`);
+			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `${foundMessage.phone} dont have whatsapp!`);
 			return false;
 		}
 		let result;
@@ -324,7 +324,7 @@ const sendMessageSchedule = async (client, collection) => {
 		if (!result) {
 			console.warn(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'Whatsapp not connected!');
 		} else {
-			await collection('Messages').updateOne(
+			await collection('ScheduleMessages').updateOne(
 				{
 					_id: foundMessage._id
 				},
@@ -338,7 +338,7 @@ const sendMessageSchedule = async (client, collection) => {
 			console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `message for ${foundMessage.phone} is sent!`);
 		}
 	} catch (e) {
-		await collection('Messages').updateOne(
+		await collection('ScheduleMessages').updateOne(
 			{
 				_id: foundMessage._id
 			},
