@@ -5,6 +5,7 @@ const dayjs = require('dayjs');
 const schedule = require('node-schedule');
 const axios = require('axios');
 const fs = require('fs');
+const fetchBase64 = require('fetch-base64');
 const uuidV4 = require('uuid/v4');
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : 'default0';
 const mongodbConnection = require('./mongodb_connection');
@@ -169,17 +170,32 @@ const sendMessage = async (client, collection) => {
 			const splitFilename = foundMessage.file.split('/');
 			const filename = splitFilename[splitFilename.length - 1];
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
-      await new Promise((resolve, reject) => {
-				client
-					.sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
-					.then((result) => {
-						resolve('success');
-					})
-					.catch((error) => {
-						console.log('error', error);
-						resolve(false);
-					});
-			});
+      if(files){
+        await new Promise((resolve, reject) => {
+          client
+            .sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
+            .then((result) => {
+              resolve('success');
+            })
+            .catch((error) => {
+              console.log('error', error);
+              resolve(false);
+            });
+        });
+      }else{
+        await collection('Messages').updateOne(
+          {
+            _id: foundMessage._id
+          },
+          {
+            $set: {
+              errorMessage: "File tidak terkirim",
+              errorAt: dayjs().toISOString(),
+              _updatedAt: dayjs().toISOString()
+            }
+          }
+        );
+      }
 		} else {
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		}
@@ -220,7 +236,6 @@ const sendMessage = async (client, collection) => {
 const sendMessageSchedule = async (client, collection) => {
 	const foundMessage = await collection('ScheduleMessages').findOne({
 		sender: WA_SESSION,
-		isScheduled: true,
 		$or: [
 			{
 				sentAt: {
@@ -230,7 +245,11 @@ const sendMessageSchedule = async (client, collection) => {
 					$exists: false
 				}
 			}
-		]
+		],
+		scheduleDate: {
+			$gte: dayjs().startOf('day').toISOString(),
+			$lte: dayjs().endOf('day').toISOString()
+		}
 	});
 
 	if (!client) {
@@ -255,11 +274,12 @@ const sendMessageSchedule = async (client, collection) => {
 		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'not found schedule message...');
 		return false;
 	}
-	if (foundMessage._createdAt <= new Date()) {
+	let scheduleDate = dayjs(foundMessage.scheduleDate).format('YYYY-MM-DD');
+	if (!dayjs().isAfter(dayjs(`${scheduleDate} ${foundMessage.scheduleHour}`))) {
 		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', 'message are still below schedule...');
 		return false;
 	} else {
-    console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `found message for ${foundMessage.phone}!`);
+		console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), ' ', `found message for ${foundMessage.phone}!`);
 	}
 	try {
 		const validPhone = await client.getNumberProfile(`${foundMessage.phone}@c.us`);
@@ -304,17 +324,32 @@ const sendMessageSchedule = async (client, collection) => {
 			const splitFilename = foundMessage.file.split('/');
 			const filename = splitFilename[splitFilename.length - 1];
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
-			result = await new Promise((resolve, reject) => {
-				client
-					.sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
-					.then((result) => {
-						resolve('success');
-					})
-					.catch((error) => {
-						console.log('error', error);
-						resolve(false);
-					});
-			});
+			if (files) {
+				await new Promise((resolve, reject) => {
+					client
+						.sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
+						.then((result) => {
+							resolve('success');
+						})
+						.catch((error) => {
+							console.log('error', error);
+							resolve(false);
+						});
+				});
+			} else {
+				await collection('ScheduleMessages').updateOne(
+					{
+						_id: foundMessage._id
+					},
+					{
+						$set: {
+							errorMessage: "File tidak terkirim",
+							errorAt: dayjs().toISOString(),
+							_updatedAt: dayjs().toISOString()
+						}
+					}
+				);
+			}
 		} else if (foundMessage.type === 'AUTOREPLY') {
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 		} else {
@@ -357,15 +392,22 @@ const sendMessageSchedule = async (client, collection) => {
 const getDocumentFromUrl = async (url) => {
 	let res;
 	try {
-		res = await axios.get(url, {
-			responseType: 'arraybuffer'
-		});
-		return `data:${res.headers['content-type']};base64,${Buffer.from(
-			String.fromCharCode(...new Uint8Array(res.data)),
-			'binary'
-		).toString('base64')}`;
+    // res = await axios.get(url, {
+		// 	responseType: 'arraybuffer'
+		// });
+		// return `data:${res.headers['content-type']};base64,${Buffer.from(
+		// 	String.fromCharCode(...new Uint8Array(res.data)),
+		// 	'binary'
+		// ).toString('base64')}`;
+    res = await fetchBase64.remote(url)
+    if(res && res.length > 1){
+      return res[1]
+    }else{
+      return false
+    }
 	} catch (err) {
-		console.log(err);
+    console.log(err);
+		return false;
 	}
 };
 // Writes QR in specified path
