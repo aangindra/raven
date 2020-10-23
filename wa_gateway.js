@@ -171,7 +171,7 @@ const sendMessage = async (client, collection) => {
 			const filename = splitFilename[splitFilename.length - 1];
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
       if(files){
-        await new Promise((resolve, reject) => {
+       new Promise((resolve, reject) => {
           client
             .sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
             .then((result) => {
@@ -325,7 +325,7 @@ const sendMessageSchedule = async (client, collection) => {
 			const filename = splitFilename[splitFilename.length - 1];
 			result = await client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
 			if (files) {
-				await new Promise((resolve, reject) => {
+				new Promise((resolve, reject) => {
 					client
 						.sendFileFromBase64(`${foundMessage.phone}@c.us`, `${files}`, `${filename}`, `${filename}`)
 						.then((result) => {
