@@ -76,14 +76,14 @@ const start = async () => {
 			}
 		}
 	});
-	//const isConnected = await client.isConnected();
+	const isConnected = await client.isConnected();
 	schedule.scheduleJob('*/10 * * * * *', async () => {
-		// if (isConnected) {
+		if (isConnected) {
 			await sendMessage(client, collection);
 			await sendMessageSchedule(client, collection);
-		// } else {
-		// 	console.log('Whatsapp not connected!');
-		// }
+		} else {
+			console.log('Whatsapp not connected!');
+		}
 	});
 	return 'success';
 };
