@@ -1,6 +1,6 @@
 const aws = require("aws-sdk");
 const dayjs = require("dayjs");
-const mongodbConnection = require('./mongodb_connection');
+const mongodbConnection = require('../mongodb_connection');
 
 const s3 = new aws.S3({
   endpoint: new aws.Endpoint("sgp1.digitaloceanspaces.com")
