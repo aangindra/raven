@@ -36,11 +36,13 @@ const start = async () => {
   for(const message of totalMessages){
     if(validUrl(message.image)){
       if(message.image.match(/WHATSAPP_IMAGES/g)){
+        console.log("URL =>", message.image);
         await removeObjectFromSpaces(message.image);
         countImage++;
       }
     }else if(validUrl(message.file)){
       if(message.file.match(/WHATSAPP_DOCUMENTS/g)){
+        console.log("URL =>", message.file);
         await removeObjectFromSpaces(message.file);
         countFile++;
       }
