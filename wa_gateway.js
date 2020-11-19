@@ -98,7 +98,10 @@ const sendMessage = async (client, collection) => {
 				},
 				errorAt: {
 					$exists: false
-				}
+				},
+        _deletedAt: {
+          $exists: false
+        }
 			}
 		]
 	});
@@ -243,7 +246,10 @@ const sendMessageSchedule = async (client, collection) => {
 				},
 				errorAt: {
 					$exists: false
-				}
+				},
+        _deletedAt: {
+          $exists: false
+        }
 			}
 		],
 		scheduleDate: {
