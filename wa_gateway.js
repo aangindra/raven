@@ -99,11 +99,11 @@ const sendMessage = async (client, collection) => {
 				errorAt: {
 					$exists: false
 				},
-        _deletedAt: {
-          $exists: false
-        }
 			}
-		]
+		],
+    _deletedAt: {
+      $exists: false
+    }
 	});
 
 	if (!client) {
@@ -247,11 +247,12 @@ const sendMessageSchedule = async (client, collection) => {
 				errorAt: {
 					$exists: false
 				},
-        _deletedAt: {
-          $exists: false
-        }
+       
 			}
 		],
+    _deletedAt: {
+      $exists: false
+     },
 		scheduleDate: {
 			$gte: dayjs().startOf('day').toISOString(),
 			$lte: dayjs().endOf('day').toISOString()
