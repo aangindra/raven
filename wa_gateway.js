@@ -105,6 +105,13 @@ const start = async () => {
 };
 
 const sendMessage = async (client, collection) => {
+  const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_APP_KEY,
+    secret: PUSHER_APP_SECRET,
+    cluster: "ap1",
+    encrypted: true,
+  });
   const foundMessage = await collection("Messages").findOne({
     sender: WA_SESSION,
     $or: [
@@ -292,6 +299,13 @@ const sendMessage = async (client, collection) => {
   return true;
 };
 const sendMessageSchedule = async (client, collection) => {
+    const pusher = new Pusher({
+    appId: PUSHER_APP_ID,
+    key: PUSHER_APP_KEY,
+    secret: PUSHER_APP_SECRET,
+    cluster: "ap1",
+    encrypted: true,
+  });
   const foundMessage = await collection("ScheduleMessages").findOne({
     sender: WA_SESSION,
     $or: [
