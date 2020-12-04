@@ -25,7 +25,7 @@ const start = async () => {
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
     cluster: "ap1",
-    encrypted: true,
+    useTLS: true,
   });
   const collection = await mongodbConnection("WA");
   let app = express();

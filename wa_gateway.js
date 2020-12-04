@@ -19,7 +19,7 @@ const start = async () => {
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
     cluster: "ap1",
-    encrypted: true,
+    useTLS: true,
   });
   const collection = await mongodbConnection("WA");
   console.log(WA_SESSION);
@@ -110,7 +110,7 @@ const sendMessage = async (client, collection) => {
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
     cluster: "ap1",
-    encrypted: true,
+    useTLS: true,
   });
   const foundMessage = await collection("Messages").findOne({
     sender: WA_SESSION,
@@ -304,7 +304,7 @@ const sendMessageSchedule = async (client, collection) => {
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
     cluster: "ap1",
-    encrypted: true,
+    useTLS: true,
   });
   const foundMessage = await collection("ScheduleMessages").findOne({
     sender: WA_SESSION,
