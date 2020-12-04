@@ -69,6 +69,8 @@ const start = async () => {
       return;
     }
     if (message.isGroupMsg === false) {
+      let results = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", results);
       let receivedPhone = message.from;
       try {
         await collection("Messages").insertOne({
