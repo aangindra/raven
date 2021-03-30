@@ -2,6 +2,8 @@ const uuidV4 = require("uuid/v4");
 const dayjs = require("dayjs");
 const bcrypt = require("bcryptjs");
 const mongodbConnection = require("../mongodb_connection");
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 
 const start = async () => {
   const collection = await mongodbConnection();
@@ -30,7 +32,7 @@ const start = async () => {
 
   await collection("Accounts").insertOne(User);
   
-  const token = "GgXAVnDq3oqx49gxSuhW5VH88qxiGcOap9bkhHauQ7jDVElDGfIG4Ybeg80aXpq";
+  const token = jwt.sign({ _id: User._id }, SECRET_KEY);
   
   await collection("UserTokens").insertOne({
     _id: uuidV4(),
