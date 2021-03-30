@@ -1,4 +1,4 @@
-## School Talk Dashboard
+## Whatsapp Gateway
 
 ### Installation
 
@@ -30,7 +30,7 @@ AWS_SECRET_ACCESS_KEY=
 ##### GIT PULL AND REMOVE NODE_MODULES
 
 ```sh
-git checkout . && git pull && rm -rf node_modules && ln -s ../aaa/node_modules/ && rm -rf release && ln -s ../aaa/.next/ release
+git checkout . && git pull && rm -rf node_modules && ln -s ../api/node_modules/
 ```
 
 ##### SETUP API
@@ -38,8 +38,4 @@ git checkout . && git pull && rm -rf node_modules && ln -s ../aaa/node_modules/ 
 ```sh
 pm2 delete --silent wa_{phone}
 pm2 start -n wa_{phone} wa_gateway.js --silent
-```
-##### ADD WHATSAPP STUDENT BILL REMINDER #####
-```sh
-pm2 start -n whatsapp-student-bill-reminder-smatrimurti utilities/whatsapp-student-bill-reminder.js --silent
 ```
