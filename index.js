@@ -269,14 +269,9 @@ const start = async () => {
       const foundAccount = await collection("Accounts").findOne({
         _id: activeSession._id,
       });
-      if(!foundAccount){
-        console.log(activeSession);
-        console.log(foundAccount);
-        return
-      }
       const listDevices = await collection("Devices")
         .find({
-          accountId: foundAccount.username,
+          accountId: foundAccount._id,
         })
         .toArray();
       const devices = listDevices.map((device) => device.phone);
