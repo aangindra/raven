@@ -266,14 +266,14 @@ const start = async () => {
       if (!activeSession) {
         return res.status(403).json({ message: "Token invalid!" });
       }
+      const foundAccount = await collection("Accounts").findOne({
+        _id: activeSession._id,
+      });
       if(!foundAccount){
         console.log(activeSession);
         console.log(foundAccount);
         return
       }
-      const foundAccount = await collection("Accounts").findOne({
-        _id: activeSession._id,
-      });
       const listDevices = await collection("Devices")
         .find({
           accountId: foundAccount.username,
