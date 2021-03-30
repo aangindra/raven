@@ -31,9 +31,18 @@ AWS_SECRET_ACCESS_KEY=
 
 ```sh
 git checkout . && git pull && rm -rf node_modules && ln -s ../api/node_modules/
+ln -s ../api/tokens
+ln -s ../api/log_qr
 ```
 
 ##### SETUP API
+
+```sh
+pm2 delete --silent api
+pm2 start -n api index.js --silent
+```
+
+##### SETUP SENDER WA GATEWAY
 
 ```sh
 pm2 delete --silent wa_{phone}
