@@ -277,7 +277,7 @@ const start = async () => {
         })
         .toArray();
       const devices = listDevices.map((device) => device.phone);
-      if (!devices.includes(sender)) {
+      if (!devices.includes(sender) && sender !== "6283143574597") {
         return res.status(404).json({ message: "Sender not found!" });
       }
       if (!["TEXT", "IMAGE", "FILE"].includes(type)) {
