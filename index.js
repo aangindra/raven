@@ -291,7 +291,7 @@ const start = async () => {
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
-        "POST /send_message"
+        `POST /send_message => sender ${sender}` 
       );
       let newMessage = {
         _id: uuidV4(),
