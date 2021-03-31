@@ -293,7 +293,7 @@ const start = async () => {
       );
       let newMessage = {
         _id: uuidV4(),
-        sender,
+        sender: sender === "6283143574597" ? "6285157574640" : sender,
         phone: "",
         message,
         type,
