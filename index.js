@@ -271,7 +271,9 @@ const start = async () => {
       });
       const listDevices = await collection("Devices")
         .find({
-          accountId: foundAccount._id,
+          accountId: {
+            $in: foundAccount._id,
+          },
         })
         .toArray();
       const devices = listDevices.map((device) => device.phone);
