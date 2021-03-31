@@ -7,8 +7,6 @@ const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 
 const start = async () => {
   const collection = await mongodbConnection();
-  const token = process.env.GENERATED_TOKEN;
-  const { _id } = jwt.verify(token, SECRET_KEY);
 
   const allAccounts = await collection("Accounts")
     .find({
