@@ -17,7 +17,7 @@
     "rxjs": "^6.6.3",
     "shelljs": "^0.8.4",
     "uuid": "^3.3.2",
-    "venom-bot": "^2.0.5",
+    "venom-bot": "^3.0.12",
     "yesno": "^0.3.1"
   },
   "scripts": {
