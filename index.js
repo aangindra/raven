@@ -271,7 +271,7 @@ const start = async () => {
       });
       const listDevices = await collection("Devices")
         .find({
-          accountId: {
+          accountIds: {
             $in: [foundAccount._id],
           },
         })
