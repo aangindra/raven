@@ -9,6 +9,7 @@ const fetchBase64 = require("fetch-base64");
 const uuidV4 = require("uuid/v4");
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 const mongodbConnection = require("./mongodb_connection");
+const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
@@ -22,6 +23,7 @@ const start = async () => {
     useTLS: true,
   });
   const collection = await mongodbConnection("WA");
+  const { cache } = await initRedis();
   console.log(WA_SESSION);
   const client = await venom.create(
     WA_SESSION,
@@ -95,8 +97,8 @@ const start = async () => {
   const isConnected = await client.isConnected();
   schedule.scheduleJob("*/20 * * * * *", async () => {
     if (isConnected) {
-      await sendMessage(client, collection);
-      await sendMessageSchedule(client, collection);
+      await sendMessage(client, cache, collection);
+      await sendMessageSchedule(client, cache, collection);
     } else {
       console.log("Whatsapp not connected!");
     }
@@ -104,7 +106,7 @@ const start = async () => {
   return "success";
 };
 
-const sendMessage = async (client, collection) => {
+const sendMessage = async (client, cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
@@ -112,6 +114,7 @@ const sendMessage = async (client, collection) => {
     cluster: "ap1",
     useTLS: true,
   });
+
   const foundMessage = await collection("Messages").findOne({
     sender: WA_SESSION,
     phone: {
@@ -131,6 +134,12 @@ const sendMessage = async (client, collection) => {
       $exists: false,
     },
   });
+  var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+  var stringResult = await cache.getAsync(cacheKey);
+  let foundCache = "";
+  if(stringResult !== null){
+    foundCache = JSON.parse(stringResult);
+  }
 
   if (!client) {
     console.log(
@@ -162,11 +171,30 @@ const sendMessage = async (client, collection) => {
     );
     return false;
   } else {
-    console.log(
-      dayjs().format("YYYY-MM-DD HH:mm:ss"),
-      " ",
-      `found message for ${foundMessage.phone}!`
-    );
+    if(foundCache){
+      if(foundCache._id === foundMessage._id){
+        console.log("Cache Hit!", dayjs().format("YYYY-MM-DD HH:mm:ss"))
+        await collection("Messages").updateOne(
+          {
+            _id: foundMessage._id,
+          },
+          {
+            $set: {
+              sentAt: dayjs().toISOString(),
+              _updatedAt: dayjs().toISOString(),
+            },
+          }
+        );
+        return false;
+      }else{
+        console.log(
+          dayjs().format("YYYY-MM-DD HH:mm:ss"),
+          " ",
+          `found message for ${foundMessage.phone}!`
+        );
+
+      }
+    }
   }
   try {
     const validPhone = await client.getNumberProfile(
@@ -212,6 +240,9 @@ const sendMessage = async (client, collection) => {
             resolve(false);
           });
       });
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       const files = await getDocumentFromUrl(foundMessage.file);
       const splitFilename = foundMessage.file.split("/");
@@ -237,6 +268,9 @@ const sendMessage = async (client, collection) => {
               resolve(false);
             });
         });
+        var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+        var stringResult = JSON.stringify(foundMessage);
+        await cache.set(cacheKey, stringResult);
       } else {
         await collection("Messages").updateOne(
           {
@@ -256,6 +290,9 @@ const sendMessage = async (client, collection) => {
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
     }
 
     if (!result) {
@@ -276,6 +313,9 @@ const sendMessage = async (client, collection) => {
           },
         }
       );
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
