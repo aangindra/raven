@@ -340,7 +340,7 @@ const sendMessage = async (client, cache, collection) => {
   // pusher.trigger("whatsapp-gateway", "message", results);
   return true;
 };
-const sendMessageSchedule = async (client, collection) => {
+const sendMessageSchedule = async (client, cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
