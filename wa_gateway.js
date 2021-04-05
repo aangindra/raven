@@ -185,6 +185,7 @@ const sendMessage = async (client, cache, collection) => {
             },
           }
         );
+        cache.del(cacheKey)
         return false;
       } else {
         console.log(
