@@ -95,7 +95,7 @@ const start = async () => {
     }
   });
   const isConnected = await client.isConnected();
-  schedule.scheduleJob("*/20 * * * * *", async () => {
+  schedule.scheduleJob("*/10 * * * * *", async () => {
     if (isConnected) {
       await sendMessage(client, cache, collection);
       await sendMessageSchedule(client, cache, collection);
