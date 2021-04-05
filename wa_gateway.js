@@ -69,8 +69,8 @@ const start = async () => {
       return;
     }
     if (message.isGroupMsg === false) {
-      let results = await calculateMessage(collection);
-      pusher.trigger("whatsapp-gateway", "message", results);
+      // let results = await calculateMessage(collection);
+      // pusher.trigger("whatsapp-gateway", "message", results);
       let receivedPhone = message.from;
       try {
         await collection("Messages").insertOne({
@@ -294,8 +294,8 @@ const sendMessage = async (client, collection) => {
     );
     console.log(e);
   }
-  let results = await calculateMessage(collection);
-  pusher.trigger("whatsapp-gateway", "message", results);
+  // let results = await calculateMessage(collection);
+  // pusher.trigger("whatsapp-gateway", "message", results);
   return true;
 };
 const sendMessageSchedule = async (client, collection) => {
@@ -506,8 +506,8 @@ const sendMessageSchedule = async (client, collection) => {
     );
     console.log(e);
   }
-  let results = await calculateMessage(collection);
-  pusher.trigger("whatsapp-gateway", "message", results);
+  // let results = await calculateMessage(collection);
+  // pusher.trigger("whatsapp-gateway", "message", results);
   return true;
 };
 const getDocumentFromUrl = async (url) => {
