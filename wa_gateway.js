@@ -134,12 +134,6 @@ const sendMessage = async (client, cache, collection) => {
       $exists: false,
     },
   });
-  var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
-  var stringResult = await cache.getAsync(cacheKey);
-  let foundCache = "";
-  if(stringResult !== null){
-    foundCache = JSON.parse(stringResult);
-  }
 
   if (!client) {
     console.log(
@@ -171,9 +165,15 @@ const sendMessage = async (client, cache, collection) => {
     );
     return false;
   } else {
-    if(foundCache){
-      if(foundCache._id === foundMessage._id){
-        console.log("Cache Hit!", dayjs().format("YYYY-MM-DD HH:mm:ss"))
+    var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+    var stringResult = await cache.getAsync(cacheKey);
+    let foundCache = "";
+    if (stringResult !== null) {
+      foundCache = JSON.parse(stringResult);
+    }
+    if (foundCache) {
+      if (foundCache._id === foundMessage._id) {
+        console.log("Cache Hit!", dayjs().format("YYYY-MM-DD HH:mm:ss"));
         await collection("Messages").updateOne(
           {
             _id: foundMessage._id,
@@ -186,13 +186,12 @@ const sendMessage = async (client, cache, collection) => {
           }
         );
         return false;
-      }else{
+      } else {
         console.log(
           dayjs().format("YYYY-MM-DD HH:mm:ss"),
           " ",
           `found message for ${foundMessage.phone}!`
         );
-
       }
     }
   }
