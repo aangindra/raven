@@ -291,6 +291,7 @@ const sendMessage = async (client, cache, collection) => {
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
+      result = true;
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
