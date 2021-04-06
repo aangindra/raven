@@ -181,6 +181,7 @@ const sendMessage = async (client, cache, collection) => {
           {
             $set: {
               sentAt: dayjs().toISOString(),
+              isPending: true,
               _updatedAt: dayjs().toISOString(),
             },
           }
@@ -286,7 +287,7 @@ const sendMessage = async (client, cache, collection) => {
         );
       }
     } else {
-      result = await client.sendText(
+      client.sendText(
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
@@ -313,9 +314,6 @@ const sendMessage = async (client, cache, collection) => {
           },
         }
       );
-      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
-      var stringResult = JSON.stringify(foundMessage);
-      await cache.set(cacheKey, stringResult);
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
