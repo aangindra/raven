@@ -225,7 +225,7 @@ const sendMessage = async (client, cache, collection) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       const splitFilename = foundMessage.image.split("/");
       const filename = splitFilename[splitFilename.length - 1];
-      result = await new Promise((resolve, reject) => {
+      result = new Promise((resolve, reject) => {
         client
           .sendImage(
             `${foundMessage.phone}@c.us`,
@@ -248,7 +248,7 @@ const sendMessage = async (client, cache, collection) => {
       const files = await getDocumentFromUrl(foundMessage.file);
       const splitFilename = foundMessage.file.split("/");
       const filename = splitFilename[splitFilename.length - 1];
-      result = await client.sendText(
+      result = client.sendText(
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
@@ -445,7 +445,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     if (foundMessage.type === "IMAGE") {
       const splitFilename = foundMessage.image.split("/");
       const filename = splitFilename[splitFilename.length - 1];
-      result = await new Promise((resolve, reject) => {
+      result = new Promise((resolve, reject) => {
         client
           .sendImage(
             `${foundMessage.phone}@c.us`,
@@ -465,7 +465,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
       const files = await getDocumentFromUrl(foundMessage.file);
       const splitFilename = foundMessage.file.split("/");
       const filename = splitFilename[splitFilename.length - 1];
-      result = await client.sendText(
+      result = client.sendText(
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
@@ -506,7 +506,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
         foundMessage.message
       );
     } else {
-      result = await client.sendText(
+      result = client.sendText(
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
