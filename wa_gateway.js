@@ -114,12 +114,22 @@ const sendMessage = async (client, cache, collection) => {
     cluster: "ap1",
     useTLS: true,
   });
+  await collection("Messages").createIndex({
+    sender: 1,
+  });
 
   const foundMessage = await collection("Messages").findOne({
     sender: WA_SESSION,
-    phone: {
-      $ne: "",
-    },
+    $and: [
+      {
+        phone: {
+          $ne: "",
+        },
+        phone: {
+          $nin: listSenders,
+        },
+      },
+    ],
     $or: [
       {
         sentAt: {
@@ -186,7 +196,7 @@ const sendMessage = async (client, cache, collection) => {
             },
           }
         );
-        cache.del(cacheKey)
+        cache.del(cacheKey);
         return false;
       } else {
         console.log(
@@ -287,10 +297,7 @@ const sendMessage = async (client, cache, collection) => {
         );
       }
     } else {
-      client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
+      client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
       result = true;
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
@@ -348,11 +355,38 @@ const sendMessageSchedule = async (client, cache, collection) => {
     cluster: "ap1",
     useTLS: true,
   });
+
+  var cacheKeySenderLists = `WA_sender_lists`;
+  var stringResultSenderLists = await cache.getAsync(cacheKeySenderLists);
+  let listSenders = "";
+
+  if (stringResultSenderLists !== null) {
+    listSenders = JSON.parse(stringResultSenderLists);
+  } else {
+    listSenders = await collection("Devices")
+      .find({
+        _deletedAt: {
+          $exists: false,
+        },
+      })
+      .toArray();
+    listSenders = listSenders.map((sender) => sender.phone);
+    stringResultSenderLists = JSON.stringify(listSenders);
+    await cache.set(cacheKeySenderLists, stringResultSenderLists);
+  }
+
   const foundMessage = await collection("ScheduleMessages").findOne({
     sender: WA_SESSION,
-    phone: {
-      $ne: "",
-    },
+    $and: [
+      {
+        phone: {
+          $ne: "",
+        },
+        phone: {
+          $nin: listSenders,
+        },
+      },
+    ],
     $or: [
       {
         sentAt: {
