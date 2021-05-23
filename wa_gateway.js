@@ -118,6 +118,25 @@ const sendMessage = async (client, cache, collection) => {
     sender: 1,
   });
 
+  var cacheKeySenderLists = `WA_sender_lists`;
+  var stringResultSenderLists = await cache.getAsync(cacheKeySenderLists);
+  let listSenders = "";
+
+  if (stringResultSenderLists !== null) {
+    listSenders = JSON.parse(stringResultSenderLists);
+  } else {
+    listSenders = await collection("Devices")
+      .find({
+        _deletedAt: {
+          $exists: false,
+        },
+      })
+      .toArray();
+    listSenders = listSenders.map((sender) => sender.phone);
+    stringResultSenderLists = JSON.stringify(listSenders);
+    await cache.set(cacheKeySenderLists, stringResultSenderLists);
+  }
+
   const foundMessage = await collection("Messages").findOne({
     sender: WA_SESSION,
     $and: [
