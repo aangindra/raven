@@ -74,23 +74,26 @@ const start = async () => {
       // let results = await calculateMessage(collection);
       // pusher.trigger("whatsapp-gateway", "message", results);
       let receivedPhone = message.from;
-      try {
-        await collection("Messages").insertOne({
-          _id: uuidV4(),
-          sender: WA_SESSION,
-          phone: receivedPhone.replace(/\D/g, ""),
-          checkSendByGroupContacts: false,
-          groupIds: [],
-          message: foundAutoReply.message,
-          type: "AUTOREPLY",
-          file: "",
-          image: "",
-          isScheduled: false,
-          _createdAt: new Date().toISOString(),
-          _updatedAt: new Date().toISOString(),
-        });
-      } catch (e) {
-        console.log(e);
+      receivedPhone = receivedPhone.replace(/\D/g, "");
+      if(receivedPhone){
+        try {
+          await collection("Messages").insertOne({
+            _id: uuidV4(),
+            sender: WA_SESSION,
+            phone: receivedPhone,
+            checkSendByGroupContacts: false,
+            groupIds: [],
+            message: foundAutoReply.message,
+            type: "AUTOREPLY",
+            file: "",
+            image: "",
+            isScheduled: false,
+            _createdAt: new Date().toISOString(),
+            _updatedAt: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.log(e);
+        }
       }
     }
   });
