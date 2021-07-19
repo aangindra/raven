@@ -69,6 +69,8 @@ const start = async () => {
       const { session } = req.body;
       try {
         const venomOptions = {
+          folderNameToken: "tokens",
+          mkdirFolderToken: "",
           headless: true,
           devtools: false,
           useChrome: true,
@@ -291,7 +293,7 @@ const start = async () => {
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
-        `POST /send_message => sender ${sender}` 
+        `POST /send_message => sender ${sender}`
       );
       let newMessage = {
         _id: uuidV4(),
