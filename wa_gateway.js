@@ -459,6 +459,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     return false;
   }
   let scheduleDate = dayjs(foundMessage.scheduleDate).format("YYYY-MM-DD");
+  console.log(`Last message >>> ${foundMessage.name} date ${scheduleDate} ${foundMessage.scheduleHour}`)
   if (!dayjs().isAfter(dayjs(`${scheduleDate} ${foundMessage.scheduleHour}`))) {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
