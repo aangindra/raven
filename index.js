@@ -106,7 +106,7 @@ const start = async () => {
                     },
                   }
                 );
-                shell.exec(`pm2 reload wa_${session}`);
+                shell.exec(`pm2 reload wa-${session}`);
                 resolve(statusSession);
               }
             },
