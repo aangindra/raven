@@ -75,7 +75,7 @@ const start = async () => {
       // pusher.trigger("whatsapp-gateway", "message", results);
       let receivedPhone = message.from;
       receivedPhone = receivedPhone.replace(/\D/g, "");
-      if(receivedPhone){
+      if (receivedPhone) {
         try {
           await collection("Messages").insertOne({
             _id: uuidV4(),
@@ -397,36 +397,42 @@ const sendMessageSchedule = async (client, cache, collection) => {
     await cache.set(cacheKeySenderLists, stringResultSenderLists);
   }
 
-  const foundMessage = await collection("ScheduleMessages").findOne({
-    sender: WA_SESSION,
-    $and: [
-      {
-        phone: {
-          $ne: "",
+  let foundMessage = await collection("ScheduleMessages")
+    .find({
+      sender: WA_SESSION,
+      $and: [
+        {
+          phone: {
+            $ne: "",
+          },
+          phone: {
+            $nin: listSenders,
+          },
         },
-        phone: {
-          $nin: listSenders,
+      ],
+      $or: [
+        {
+          sentAt: {
+            $exists: false,
+          },
+          errorAt: {
+            $exists: false,
+          },
         },
+      ],
+      _deletedAt: {
+        $exists: false,
       },
-    ],
-    $or: [
-      {
-        sentAt: {
-          $exists: false,
-        },
-        errorAt: {
-          $exists: false,
-        },
+      scheduleDate: {
+        $gte: dayjs().startOf("day").toISOString(),
+        $lte: dayjs().endOf("day").toISOString(),
       },
-    ],
-    _deletedAt: {
-      $exists: false,
-    },
-    scheduleDate: {
-      $gte: dayjs().startOf("day").toISOString(),
-      $lte: dayjs().endOf("day").toISOString(),
-    },
-  });
+    })
+    .sort({
+      scheduleHour: 1,
+    })
+    .limit(1)
+    .toArray();
 
   if (!client) {
     console.log(
@@ -450,7 +456,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     }
     return false;
   }
-  if (!foundMessage) {
+  if (!foundMessage || foundMessage.length < 1) {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
       " ",
@@ -458,8 +464,11 @@ const sendMessageSchedule = async (client, cache, collection) => {
     );
     return false;
   }
+  foundMessage = foundMessage[0];
   let scheduleDate = dayjs(foundMessage.scheduleDate).format("YYYY-MM-DD");
-  console.log(`Last message >>> ${foundMessage.name} date ${scheduleDate} ${foundMessage.scheduleHour}`)
+  console.log(
+    `Last message >>> ${foundMessage.name} date ${scheduleDate} ${foundMessage.scheduleHour}`
+  );
   if (!dayjs().isAfter(dayjs(`${scheduleDate} ${foundMessage.scheduleHour}`))) {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
