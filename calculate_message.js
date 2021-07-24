@@ -1,8 +1,17 @@
+const dayjs = require("dayjs");
+
 const calculateMessage = async (collection) => {
+  const startDate = dayjs().startOf("day").toISOString();
+  const endDate = dayjs().endOf("day").toISOString();
+
   const countAllMessages = await collection("Messages")
     .find({
       _deletedAt: {
         $exists: false,
+      },
+      _createdAt: {
+        $gte: startDate,
+        $lte: endDate,
       },
     })
     .count();
@@ -20,6 +29,10 @@ const calculateMessage = async (collection) => {
           },
         },
       ],
+      _createdAt: {
+        $gte: startDate,
+        $lte: endDate,
+      },
       _deletedAt: {
         $exists: false,
       },
@@ -29,6 +42,10 @@ const calculateMessage = async (collection) => {
     .find({
       sentAt: {
         $exists: true,
+      },
+      _createdAt: {
+        $gte: startDate,
+        $lte: endDate,
       },
       _deletedAt: {
         $exists: false,
@@ -42,6 +59,10 @@ const calculateMessage = async (collection) => {
       },
       errorAt: {
         $exists: false,
+      },
+      _createdAt: {
+        $gte: startDate,
+        $lte: endDate,
       },
       _deletedAt: {
         $exists: false,
