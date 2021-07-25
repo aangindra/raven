@@ -538,9 +538,9 @@ const sendMessageSchedule = async (client, cache, collection) => {
       if (files) {
         new Promise((resolve, reject) => {
           client
-            .sendFileFromBase64(
+            .sendFile(
               `${foundMessage.phone}@c.us`,
-              `${files}`,
+              `${foundMessage.file}`,
               `${filename}`,
               `${filename}`
             )
