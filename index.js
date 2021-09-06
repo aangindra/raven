@@ -263,7 +263,7 @@ const start = async () => {
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
-      const { phone, message, type, image, file, sender } = req.body;
+      const { phone, message, type, image, file, sender, PREFIX } = req.body;
       const activeSession = await authenticate(req);
       if (!activeSession) {
         return res.status(403).json({ message: "Token invalid!" });
@@ -302,6 +302,7 @@ const start = async () => {
         message,
         type,
         isScheduled: false,
+        PREFIX,
         _createdAt: dayjs().toISOString(),
         _updatedAt: dayjs().toISOString(),
       };
