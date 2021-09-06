@@ -321,6 +321,8 @@ const sendMessage = async (client, cache, collection) => {
     } else {
       client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
       result = true;
+      let calculate = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", calculate);
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
@@ -365,8 +367,6 @@ const sendMessage = async (client, cache, collection) => {
     );
     console.log(e);
   }
-  let results = await calculateMessage(collection);
-  pusher.trigger("whatsapp-gateway", "message", results);
   return true;
 };
 const sendMessageSchedule = async (client, cache, collection) => {
@@ -538,9 +538,9 @@ const sendMessageSchedule = async (client, cache, collection) => {
       if (files) {
         new Promise((resolve, reject) => {
           client
-            .sendFileFromBase64(
+            .sendFile(
               `${foundMessage.phone}@c.us`,
-              `${files}`,
+              `${foundMessage.file}`,
               `${filename}`,
               `${filename}`
             )
@@ -576,6 +576,8 @@ const sendMessageSchedule = async (client, cache, collection) => {
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
+      let calculate = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", calculate);
     }
 
     if (!result) {
@@ -617,8 +619,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     );
     console.log(e);
   }
-  let results = await calculateMessage(collection);
-  pusher.trigger("whatsapp-gateway", "message", results);
+
   return true;
 };
 const getDocumentFromUrl = async (url) => {
