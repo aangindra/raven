@@ -372,7 +372,7 @@ const generatedLoadBalanceMessage = (message) => {
   const seconds = dayjs(message._createdAt).unix();
   let result = message;
 
-  if (loadBalancedSender.length > 1) {
+  if (loadBalancedSender.length > 1 && result.sender !== "628973787777") {
     if (seconds % 2 === 0) {
       result.sender = loadBalancedSender[0];
       console.log("hit even!");
