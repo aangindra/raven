@@ -316,7 +316,7 @@ const start = async () => {
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
         newMessage = generatedLoadBalanceMessage(newMessage);
-        //await collection("Messages").insertOne(newMessage);
+        await collection("Messages").insertOne(newMessage);
       }
       // let results = await calculateMessage(collection);
       // pusher.trigger("whatsapp-gateway", "message", results);
