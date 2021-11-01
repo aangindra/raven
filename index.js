@@ -252,7 +252,7 @@ const start = async () => {
   );
   app.post(
     "/send_message",
-    verifyToken,
+    // verifyToken,
     [
       bodyValidator("sender").notEmpty().withMessage("sender cannot be empty!"),
       bodyValidator("phone").notEmpty().withMessage("phone cannot be empty!"),
@@ -267,26 +267,26 @@ const start = async () => {
         return res.status(400).json({ errors: errors.array() });
       }
       const { phone, message, type, image, file, sender, PREFIX } = req.body;
-      const activeSession = await authenticate(req);
-      if (!activeSession) {
-        return res.status(403).json({ message: "Token invalid!" });
-      }
-      const foundAccount = await collection("Accounts").findOne({
-        _id: activeSession._id,
-      });
-      const listDevices = await collection("Devices")
-        .find({
-          accountIds: {
-            $in: [foundAccount._id],
-          },
-        })
-        .toArray();
-      const devices = listDevices.map((device) => device.phone);
-      if (!devices.includes(sender)) {
-        if (sender !== "6283143574597") {
-          return res.status(404).json({ message: "Sender not found!" });
-        }
-      }
+      // const activeSession = await authenticate(req);
+      // if (!activeSession) {
+      //   return res.status(403).json({ message: "Token invalid!" });
+      // }
+      // const foundAccount = await collection("Accounts").findOne({
+      //   _id: activeSession._id,
+      // });
+      // const listDevices = await collection("Devices")
+      //   .find({
+      //     accountIds: {
+      //       $in: [foundAccount._id],
+      //     },
+      //   })
+      //   .toArray();
+      // const devices = listDevices.map((device) => device.phone);
+      // if (!devices.includes(sender)) {
+      //   if (sender !== "6283143574597") {
+      //     return res.status(404).json({ message: "Sender not found!" });
+      //   }
+      // }
       if (!["TEXT", "IMAGE", "FILE"].includes(type)) {
         return res
           .status(400)
@@ -316,10 +316,10 @@ const start = async () => {
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
         newMessage = generatedLoadBalanceMessage(newMessage);
-        await collection("Messages").insertOne(newMessage);
+        //await collection("Messages").insertOne(newMessage);
       }
-      let results = await calculateMessage(collection);
-      pusher.trigger("whatsapp-gateway", "message", results);
+      // let results = await calculateMessage(collection);
+      // pusher.trigger("whatsapp-gateway", "message", results);
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
@@ -369,14 +369,16 @@ const exportQR = (base64Qr, path) => {
 
 const generatedLoadBalanceMessage = (message) => {
   const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
-  const newPhone = parseInt(message.phone);
+  const seconds = dayjs(message._createdAt).unix();
   let result = message;
 
   if (loadBalancedSender.length > 1) {
-    if (newPhone % 2 === 0) {
+    if (seconds % 2 === 0) {
       result.sender = loadBalancedSender[0];
+      console.log("hit even!");
     } else {
       result.sender = loadBalancedSender[1];
+      console.log("hit odd!");
     }
   }
   return result;
