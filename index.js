@@ -318,8 +318,8 @@ const start = async () => {
         newMessage = generatedLoadBalanceMessage(newMessage);
         await collection("Messages").insertOne(newMessage);
       }
-      // let results = await calculateMessage(collection);
-      // pusher.trigger("whatsapp-gateway", "message", results);
+      let results = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", results);
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
