@@ -10,14 +10,17 @@ const cors = require("cors");
 const mongodbConnection = require("./mongodb_connection");
 const { body: bodyValidator, validationResult } = require("express-validator");
 const path = require("path");
-const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const shell = require("shelljs");
 const { verifyToken, authenticate } = require("./auth/verifyToken");
 const Pusher = require("pusher");
-const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
+const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
+const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
+const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
+  ? process.env.SENDER_LOAD_BALANCE
+  : "";
 
 const start = async () => {
   const pusher = new Pusher({
@@ -295,6 +298,7 @@ const start = async () => {
         " ",
         `POST /send_message => sender ${sender}`
       );
+
       let newMessage = {
         _id: uuidV4(),
         sender: sender === "6283143574597" ? "6285157574640" : sender,
@@ -313,9 +317,11 @@ const start = async () => {
       } else {
         newMessage.type = "TEXT";
       }
+
       const phones = phone.split(",");
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
+        newMessage = generatedLoadBalanceMessage(newMessage);
         await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
@@ -360,6 +366,21 @@ const exportQR = (base64Qr, path) => {
       console.log(err);
     }
   });
+};
+
+const generatedLoadBalanceMessage = (message) => {
+  const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
+  const newPhone = parseInt(message.phone);
+  let result = message;
+
+  if (loadBalancedSender.length > 1) {
+    if (newPhone % 2 === 0) {
+      result.sender = loadBalancedSender[0];
+    } else {
+      result.sender = loadBalancedSender[1];
+    }
+  }
+  return result;
 };
 
 const base64Encode = (file) => {
