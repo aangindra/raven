@@ -267,26 +267,26 @@ const start = async () => {
         return res.status(400).json({ errors: errors.array() });
       }
       const { phone, message, type, image, file, sender, PREFIX } = req.body;
-      // const activeSession = await authenticate(req);
-      // if (!activeSession) {
-      //   return res.status(403).json({ message: "Token invalid!" });
-      // }
-      // const foundAccount = await collection("Accounts").findOne({
-      //   _id: activeSession._id,
-      // });
-      // const listDevices = await collection("Devices")
-      //   .find({
-      //     accountIds: {
-      //       $in: [foundAccount._id],
-      //     },
-      //   })
-      //   .toArray();
-      // const devices = listDevices.map((device) => device.phone);
-      // if (!devices.includes(sender)) {
-      //   if (sender !== "6283143574597") {
-      //     return res.status(404).json({ message: "Sender not found!" });
-      //   }
-      // }
+      const activeSession = await authenticate(req);
+      if (!activeSession) {
+        return res.status(403).json({ message: "Token invalid!" });
+      }
+      const foundAccount = await collection("Accounts").findOne({
+        _id: activeSession._id,
+      });
+      const listDevices = await collection("Devices")
+        .find({
+          accountIds: {
+            $in: [foundAccount._id],
+          },
+        })
+        .toArray();
+      const devices = listDevices.map((device) => device.phone);
+      if (!devices.includes(sender)) {
+        if (sender !== "6283143574597") {
+          return res.status(404).json({ message: "Sender not found!" });
+        }
+      }
       if (!["TEXT", "IMAGE", "FILE"].includes(type)) {
         return res
           .status(400)
@@ -369,14 +369,15 @@ const exportQR = (base64Qr, path) => {
 
 const generatedLoadBalanceMessage = (message) => {
   const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
-  const seconds = dayjs(message._createdAt).unix();
+  // const seconds = dayjs(message._createdAt).unix();
+  const phone = parseInt(message.phone);
   let result = message;
 
   if (
     loadBalancedSender.length > 1 &&
     !["6283179715536", "628973787777"].includes(result.sender)
   ) {
-    if (seconds % 2 === 0) {
+    if (phone % 2 === 0) {
       result.sender = loadBalancedSender[0];
       console.log("hit even!");
     } else {
