@@ -293,12 +293,6 @@ const start = async () => {
           .json({ errors: { message: "Wrong type message!" } });
       }
 
-      console.log(
-        dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        " ",
-        `POST /send_message => sender ${sender}`
-      );
-
       let newMessage = {
         _id: uuidV4(),
         sender: sender === "6283143574597" ? "6285157574640" : sender,
@@ -326,6 +320,11 @@ const start = async () => {
       }
       let results = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", results);
+      console.log(
+        dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        " ",
+        `POST /send_message => sender ${newMessage.sender}`
+      );
       return res.status(200).json({ message: "Success send message!" });
     }
   );
