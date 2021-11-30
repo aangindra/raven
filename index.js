@@ -72,6 +72,7 @@ const start = async () => {
       const { session } = req.body;
       try {
         const venomOptions = {
+          multidevice: false,
           folderNameToken: "tokens",
           mkdirFolderToken: "",
           headless: true,
