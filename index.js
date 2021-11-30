@@ -116,19 +116,14 @@ const start = async () => {
               }
             },
             venomOptions,
-            // {
-            //   WABrowserId: '"UnXjH....."',
-            //   WASecretBundle:
-            //     '{"key":"+i/nRgWJ....","encKey":"kGdMR5t....","macKey":"+i/nRgW...."}',
-            //   WAToken1: '"0i8...."',
-            //   WAToken2: '"1@lPpzwC...."'
-            // },
-            // BrowserInstance
             (browser, waPage) => {
               console.log('Browser PID:', browser.process().pid);
               waPage.screenshot({ path: 'screenshot.png' });
             }
-          );
+          ).then(async callback => {
+            const token = await callback.getSessionTokenBrowser();
+            fs.writeFileSync(`${__dirname + '/tokens/' + session}.data.json`, JSON.stringify(token));
+          });
         });
         if (client === "isLogged") {
           await collection("Devices").updateOne(
