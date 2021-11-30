@@ -13,6 +13,7 @@ const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
+const currentSession = require(`./tokens/${WA_SESSION}.data.json`);
 
 const start = async () => {
   const pusher = new Pusher({
@@ -24,7 +25,6 @@ const start = async () => {
   });
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
-  console.log(WA_SESSION);
   const client = await venom.create(
     WA_SESSION,
     (base64Qr, asciiQR) => {
@@ -49,6 +49,9 @@ const start = async () => {
       autoClose: false,
       disableSpins: true,
       disableWelcome: true,
+    },
+    {
+      ...currentSession
     }
   );
   client.onStateChange((state) => {
