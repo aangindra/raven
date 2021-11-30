@@ -13,9 +13,13 @@ const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
-const currentSession = require(`./tokens/${WA_SESSION}.data.json`);
 
 const start = async () => {
+  let currentSession = {};
+  if (fs.existsSync(__dirname + `/tokens/${WA_SESSION}.data.json`)) {
+    //file exists
+    currentSession = JSON.parse(fs.readFileSync(__dirname + `/tokens/${WA_SESSION}.data.json`, 'utf8'));
+  }
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
