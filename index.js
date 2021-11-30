@@ -249,7 +249,7 @@ const start = async () => {
           fs.unlinkSync(pathTokens);
         }
         if (fs.existsSync(pathFolderTokens)) {
-          fs.rmdir(pathFolderTokens);
+          fs.rmdirSync(pathFolderTokens, { recursive: true });
         }
         await collection("Devices").updateOne(
           {
