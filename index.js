@@ -85,6 +85,7 @@ const start = async () => {
           autoClose: false,
           disableSpins: true,
           disableWelcome: true,
+          createPathFileToken: false,
           createFileToken: true,
         };
         const client = await new Promise((resolve, reject) => {
