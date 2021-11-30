@@ -50,9 +50,7 @@ const start = async () => {
       disableSpins: true,
       disableWelcome: true,
     },
-    {
-      ...currentSession
-    }
+    currentSession ? { ...currentSession } : {}
   );
   client.onStateChange((state) => {
     const conflits = [
