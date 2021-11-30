@@ -18,7 +18,35 @@
     "rxjs": "^6.6.3",
     "shelljs": "^0.8.4",
     "uuid": "^3.3.2",
-    "venom-bot": "^3.1.12",
+    "venom-bot": "^4.0.1",
+    "yesno": "^0.3.1"
+  },
+  "scripts": {
+    "backup-db": "node utilities/export-local-db.js",
+    "restore-db": "node utilities/import-local-db.js"
+  }
+}
+{
+  "dependencies": {
+    "aws-sdk": "^2.784.0",
+    "axios": "^0.20.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dayjs": "^1.8.35",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.6.1",
+    "fetch-base64": "^2.1.2",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.6.1",
+    "node-schedule": "^1.3.2",
+    "pusher": "^4.0.2",
+    "pusher-js": "^7.0.2",
+    "redis": "^3.1.0",
+    "rxjs": "^6.6.3",
+    "shelljs": "^0.8.4",
+    "uuid": "^3.3.2",
+    "venom-bot": "^4.0.1",
     "yesno": "^0.3.1"
   },
   "scripts": {

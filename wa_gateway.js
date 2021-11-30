@@ -1,4 +1,4 @@
-require("dotenv").config();
+vrequire("dotenv").config();
 const venom = require("venom-bot");
 const { writeFileSync, existsSync, mkdirSync } = require("fs");
 const dayjs = require("dayjs");
@@ -37,17 +37,18 @@ const start = async () => {
       console.log(statusSession);
     },
     {
-      headless: true, // Headless chrome
-      devtools: false, // Open devtools by default
-      useChrome: true, // If false will use Chromium instance
-      debug: false, // Opens a debug session
-      logQR: true, // Logs QR automatically in terminal
-      browserArgs: ["--no-sandbox"], // Parameters to be added into the chrome browser instance
-      refreshQR: 15000, // Will refresh QR every 15 seconds, 0 will load QR once. Default is 30 seconds
-      autoClose: false, // Will auto close automatically if not synced, 'false' won't auto close. Default is 60 seconds (#Important!!! Will automatically set 'refreshQR' to 1000#)
-      disableSpins: true, // Will disable Spinnies animation, useful for containers (docker) for a better log
+      folderNameToken: "tokens",
+      mkdirFolderToken: "",
+      headless: true,
+      devtools: false,
+      useChrome: true,
+      debug: false,
+      logQR: false,
+      browserArgs: ["--no-sandbox"],
+      refreshQR: 15000,
+      autoClose: false,
+      disableSpins: true,
       disableWelcome: true,
-      autoClose: 30000,
     }
   );
   client.onStateChange((state) => {
