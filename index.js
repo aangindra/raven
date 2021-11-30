@@ -84,6 +84,7 @@ const start = async () => {
           autoClose: false,
           disableSpins: true,
           disableWelcome: true,
+          createFileToken: true,
         };
         const client = await new Promise((resolve, reject) => {
           venom.create(
@@ -113,7 +114,19 @@ const start = async () => {
                 resolve(statusSession);
               }
             },
-            venomOptions
+            venomOptions,
+            // {
+            //   WABrowserId: '"UnXjH....."',
+            //   WASecretBundle:
+            //     '{"key":"+i/nRgWJ....","encKey":"kGdMR5t....","macKey":"+i/nRgW...."}',
+            //   WAToken1: '"0i8...."',
+            //   WAToken2: '"1@lPpzwC...."'
+            // },
+            // BrowserInstance
+            (browser, waPage) => {
+              console.log('Browser PID:', browser.process().pid);
+              waPage.screenshot({ path: 'screenshot.png' });
+            }
           );
         });
         if (client === "isLogged") {
