@@ -72,6 +72,7 @@ const start = async () => {
       const { session } = req.body;
       try {
         const venomOptions = {
+          multidevice: false, // for version not multidevice use false.(default: true)
           folderNameToken: "tokens",
           mkdirFolderToken: "",
           headless: true,
@@ -84,6 +85,7 @@ const start = async () => {
           autoClose: false,
           disableSpins: true,
           disableWelcome: true,
+          createPathFileToken: false
         };
         const client = await new Promise((resolve, reject) => {
           venom.create(
