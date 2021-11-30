@@ -227,12 +227,16 @@ const start = async () => {
       const { session } = req.body;
       let pathQrCode = __dirname + `/log_qr/qrCode_${session}.png`;
       let pathTokens = __dirname + `/tokens/${session}.data.json`;
+      let pathFolderTokens = __dirname + `/tokens/${session}`;
       try {
         if (fs.existsSync(pathQrCode)) {
           fs.unlinkSync(pathQrCode);
         }
         if (fs.existsSync(pathTokens)) {
           fs.unlinkSync(pathTokens);
+        }
+        if (fs.existsSync(pathFolderTokens)) {
+          fs.rmdir(pathFolderTokens);
         }
         await collection("Devices").updateOne(
           {
