@@ -16,9 +16,9 @@ const { calculateMessage } = require("./calculate_message");
 
 const start = async () => {
   let currentSession = {};
-  if (fs.existsSync(__dirname + `/tokens/${WA_SESSION}.data.json`)) {
+  if (fs.existsSync(__dirname + `/saved_tokens/${WA_SESSION}.data.json`)) {
     //file exists
-    currentSession = JSON.parse(fs.readFileSync(__dirname + `/tokens/${WA_SESSION}.data.json`, 'utf8'));
+    currentSession = JSON.parse(fs.readFileSync(__dirname + `/saved_tokens/${WA_SESSION}.data.json`, 'utf8'));
   }
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
@@ -182,7 +182,7 @@ const sendMessage = async (client, cache, collection) => {
     await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
     // delete file qr and token
     let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
-    let pathTokens = __dirname + `/tokens/${WA_SESSION}.data.json`;
+    let pathTokens = __dirname + `/saved_tokens/${WA_SESSION}.data.json`;
     try {
       if (fs.existsSync(pathQrCode)) {
         fs.unlinkSync(pathQrCode);
@@ -449,7 +449,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
     // delete file qr and token
     let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
-    let pathTokens = __dirname + `/tokens/${WA_SESSION}.data.json`;
+    let pathTokens = __dirname + `/saved_tokens/${WA_SESSION}.data.json`;
     try {
       if (fs.existsSync(pathQrCode)) {
         fs.unlinkSync(pathQrCode);

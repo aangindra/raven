@@ -122,7 +122,7 @@ const start = async () => {
             }
           ).then(async callback => {
             const token = await callback.getSessionTokenBrowser();
-            fs.writeFileSync(`${__dirname + '/tokens/' + session}.data.json`, JSON.stringify(token));
+            fs.writeFileSync(`${__dirname + '/saved_tokens/' + session}.data.json`, JSON.stringify(token));
           });
         });
         if (client === "isLogged") {
