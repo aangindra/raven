@@ -221,19 +221,22 @@ const sendMessage = async (cache, collection) => {
       );
     }
   } catch (e) {
-    await collection("Messages").updateOne(
-      {
-        _id: foundMessage._id,
-      },
-      {
-        $set: {
-          errorMessage: JSON.stringify(e),
-          errorAt: dayjs().toISOString(),
-          _updatedAt: dayjs().toISOString(),
+    if(e.response.status != 524) {
+      await collection("Messages").updateOne(
+        {
+          _id: foundMessage._id,
         },
-      }
-    );
-    console.log(e.response);
+        {
+          $set: {
+            errorMessage: JSON.stringify(e),
+            errorAt: dayjs().toISOString(),
+            _updatedAt: dayjs().toISOString(),
+          },
+        }
+      );
+    }else{
+      console.log("Error >", e.response);
+    }
   }
   return true;
 };
@@ -422,19 +425,22 @@ const sendMessageSchedule = async (cache, collection) => {
       );
     }
   } catch (e) {
-    await collection("ScheduleMessages").updateOne(
-      {
-        _id: foundMessage._id,
-      },
-      {
-        $set: {
-          errorMessage: JSON.stringify(e),
-          errorAt: dayjs().toISOString(),
-          _updatedAt: dayjs().toISOString(),
+    if(e.response.status != 524) {
+      await collection("Messages").updateOne(
+        {
+          _id: foundMessage._id,
         },
-      }
-    );
-    console.log(e.response);
+        {
+          $set: {
+            errorMessage: JSON.stringify(e),
+            errorAt: dayjs().toISOString(),
+            _updatedAt: dayjs().toISOString(),
+          },
+        }
+      );
+    }else{
+      console.log("Error >", e.response);
+    }
   }
 
   return true;
