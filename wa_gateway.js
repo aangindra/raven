@@ -167,7 +167,7 @@ const sendMessage = async (cache, collection) => {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
         number: foundMessage.phone,
-        message: foundMessage.message,
+        // message: foundMessage.message,
         filetype: extension,
         url: foundMessage.file
       });
@@ -367,7 +367,7 @@ const sendMessageSchedule = async (cache, collection) => {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
         number: foundMessage.phone,
-        message: foundMessage.message,
+        // message: foundMessage.message,
         filetype: extension,
         url: foundMessage.file
       });
