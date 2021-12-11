@@ -240,6 +240,7 @@ const sendMessage = async (cache, collection) => {
   }
   return true;
 };
+
 const sendMessageSchedule = async (cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
@@ -329,7 +330,7 @@ const sendMessageSchedule = async (cache, collection) => {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
       " ",
-      `found message for ${foundMessage.phone}!`
+      `found schedule message for ${foundMessage.phone}!`
     );
   }
   try {
@@ -426,7 +427,7 @@ const sendMessageSchedule = async (cache, collection) => {
     }
   } catch (e) {
     if(e.response.status != 524) {
-      await collection("Messages").updateOne(
+      await collection("ScheduleMessages").updateOne(
         {
           _id: foundMessage._id,
         },
@@ -445,6 +446,7 @@ const sendMessageSchedule = async (cache, collection) => {
 
   return true;
 };
+
 const getDocumentFromUrl = async (url) => {
   let res;
   try {
