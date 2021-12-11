@@ -11,7 +11,7 @@ const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
-const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
+const { API_KEY, ID_PENGIRIM, PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
 
 const start = async () => {
@@ -20,102 +20,19 @@ const start = async () => {
     //file exists
     currentSession = JSON.parse(fs.readFileSync(__dirname + `/saved_tokens/${WA_SESSION}.data.json`, 'utf8'));
   }
-  const pusher = new Pusher({
-    appId: PUSHER_APP_ID,
-    key: PUSHER_APP_KEY,
-    secret: PUSHER_APP_SECRET,
-    cluster: "ap1",
-    useTLS: true,
-  });
+
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
-  const client = await venom.create(
-    WA_SESSION,
-    (base64Qr, asciiQR) => {
-      if (!existsSync(`./log_qr`)) {
-        mkdirSync(`./log_qr`, { recursive: true });
-      }
-      exportQR(base64Qr, `log_qr/qrCode_${WA_SESSION}.png`);
-    },
-    (statusSession) => {
-      console.log(statusSession);
-    },
-    {
-      folderNameToken: "tokens",
-      mkdirFolderToken: "",
-      headless: true,
-      devtools: false,
-      useChrome: true,
-      debug: false,
-      logQR: false,
-      browserArgs: ["--no-sandbox"],
-      refreshQR: 15000,
-      autoClose: false,
-      disableSpins: true,
-      disableWelcome: true,
-    },
-    currentSession ? { ...currentSession } : {}
-  );
-  client.onStateChange((state) => {
-    const conflits = [
-      venom.SocketState.CONFLICT,
-      venom.SocketState.UNPAIRED,
-      venom.SocketState.UNLAUNCHED,
-    ];
-    if (conflits.includes(state)) {
-      client.useHere();
-      if (state === "UNPAIRED") {
-        console.log("WA DISCONNECTED!");
-      }
-    }
-  });
-  client.onMessage(async (message) => {
-    const foundAutoReply = await collection("WhatsappAutoReplies").findOne({
-      sender: WA_SESSION,
-    });
-    if (!foundAutoReply) {
-      return;
-    }
-    if (message.isGroupMsg === false) {
-      let results = await calculateMessage(collection);
-      pusher.trigger("whatsapp-gateway", "message", results);
-      let receivedPhone = message.from;
-      receivedPhone = receivedPhone.replace(/\D/g, "");
-      if (receivedPhone) {
-        try {
-          await collection("Messages").insertOne({
-            _id: uuidV4(),
-            sender: WA_SESSION,
-            phone: receivedPhone,
-            checkSendByGroupContacts: false,
-            groupIds: [],
-            message: foundAutoReply.message,
-            type: "AUTOREPLY",
-            file: "",
-            image: "",
-            isScheduled: false,
-            _createdAt: new Date().toISOString(),
-            _updatedAt: new Date().toISOString(),
-          });
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    }
-  });
-  const isConnected = await client.isConnected();
   schedule.scheduleJob("*/10 * * * * *", async () => {
-    if (isConnected) {
-      await sendMessage(client, cache, collection);
-      await sendMessageSchedule(client, cache, collection);
-    } else {
-      console.log("Whatsapp not connected!");
-    }
+
+    await sendMessage(cache, collection);
+    await sendMessageSchedule(cache, collection);
+
   });
   return "success";
 };
 
-const sendMessage = async (client, cache, collection) => {
+const sendMessage = async (cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
@@ -173,28 +90,6 @@ const sendMessage = async (client, cache, collection) => {
     },
   });
 
-  if (!client) {
-    console.log(
-      dayjs().format("YYYY-MM-DD HH:mm:ss"),
-      " ",
-      "Device not connected!"
-    );
-    await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
-    // delete file qr and token
-    let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
-    let pathTokens = __dirname + `/saved_tokens/${WA_SESSION}.data.json`;
-    try {
-      if (fs.existsSync(pathQrCode)) {
-        fs.unlinkSync(pathQrCode);
-      }
-      if (fs.existsSync(pathTokens)) {
-        fs.unlinkSync(pathTokens);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-    return false;
-  }
   if (!foundMessage) {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
@@ -236,96 +131,44 @@ const sendMessage = async (client, cache, collection) => {
     }
   }
   try {
-    const validPhone = await client.getNumberProfile(
-      `${foundMessage.phone}@c.us`
-    );
-    if (validPhone === 404) {
-      await collection("Messages").updateOne(
-        {
-          _id: foundMessage._id,
-        },
-        {
-          $set: {
-            errorMessage: "Invalid phone number!",
-            errorAt: dayjs().toISOString(),
-            _updatedAt: dayjs().toISOString(),
-          },
-        }
-      );
-      console.log(
-        dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        " ",
-        `${foundMessage.phone} not have whatsapp!`
-      );
-      return false;
-    }
     let result;
+    let response = false;
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
-      const splitFilename = foundMessage.image.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = new Promise((resolve, reject) => {
-        client
-          .sendImage(
-            `${foundMessage.phone}@c.us`,
-            `${foundMessage.image}`,
-            `${filename}`,
-            `${foundMessage.message}`
-          )
-          .then((result) => {
-            resolve("success");
-          })
-          .catch((error) => {
-            console.log("error", error);
-            resolve(false);
-          });
+      let extension = foundMessage.image.split(".");
+      extension = extension[extension.length - 1];
+
+      response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+        filetype: extension,
+        url: foundMessage.image
       });
+
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
-      const files = await getDocumentFromUrl(foundMessage.file);
-      const splitFilename = foundMessage.file.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-      if (files) {
-        new Promise((resolve, reject) => {
-          client
-            .sendFileFromBase64(
-              `${foundMessage.phone}@c.us`,
-              `${files}`,
-              `${filename}`,
-              `${filename}`
-            )
-            .then((result) => {
-              resolve("success");
-            })
-            .catch((error) => {
-              console.log("error", error);
-              resolve(false);
-            });
-        });
-        var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
-        var stringResult = JSON.stringify(foundMessage);
-        await cache.set(cacheKey, stringResult);
-      } else {
-        await collection("Messages").updateOne(
-          {
-            _id: foundMessage._id,
-          },
-          {
-            $set: {
-              errorMessage: "File tidak terkirim",
-              errorAt: dayjs().toISOString(),
-              _updatedAt: dayjs().toISOString(),
-            },
-          }
-        );
-      }
+      let extension = foundMessage.file.split(".");
+      extension = extension[extension.length - 1];
+
+      response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+        filetype: extension,
+        url: foundMessage.file
+      });
+
     } else {
-      client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+      response = await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      }); 
       result = true;
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
@@ -334,13 +177,22 @@ const sendMessage = async (client, cache, collection) => {
       await cache.set(cacheKey, stringResult);
     }
 
-    if (!result) {
-      console.warn(
-        dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        " ",
-        "Whatsapp not connected!"
+    if (!response || response.data.status === false) {
+      await collection("Messages").updateOne(
+        {
+          _id: foundMessage._id,
+        },
+        {
+          $set: {
+            errorMessage: JSON.stringify(response.data),
+            errorAt: dayjs().toISOString(),
+            _updatedAt: dayjs().toISOString(),
+          },
+        }
       );
+      console.log(response.data)
     } else {
+
       await collection("Messages").updateOne(
         {
           _id: foundMessage._id,
@@ -365,17 +217,17 @@ const sendMessage = async (client, cache, collection) => {
       },
       {
         $set: {
-          errorMessage: JSON.stringify(e),
+          errorMessage: JSON.stringify(e.response),
           errorAt: dayjs().toISOString(),
           _updatedAt: dayjs().toISOString(),
         },
       }
     );
-    console.log(e);
+    console.log(e.response);
   }
   return true;
 };
-const sendMessageSchedule = async (client, cache, collection) => {
+const sendMessageSchedule = async (cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
@@ -440,28 +292,6 @@ const sendMessageSchedule = async (client, cache, collection) => {
     .limit(1)
     .toArray();
 
-  if (!client) {
-    console.log(
-      dayjs().format("YYYY-MM-DD HH:mm:ss"),
-      " ",
-      "Device not connected!"
-    );
-    await updateStatusDevice(WA_SESSION, "DISCONNECTED", collection);
-    // delete file qr and token
-    let pathQrCode = __dirname + `/log_qr/qrCode_${WA_SESSION}.png`;
-    let pathTokens = __dirname + `/saved_tokens/${WA_SESSION}.data.json`;
-    try {
-      if (fs.existsSync(pathQrCode)) {
-        fs.unlinkSync(pathQrCode);
-      }
-      if (fs.existsSync(pathTokens)) {
-        fs.unlinkSync(pathTokens);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-    return false;
-  }
   if (!foundMessage || foundMessage.length < 1) {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
@@ -490,107 +320,68 @@ const sendMessageSchedule = async (client, cache, collection) => {
     );
   }
   try {
-    const validPhone = await client.getNumberProfile(
-      `${foundMessage.phone}@c.us`
-    );
-    if (validPhone === 404) {
+   
+    let result;
+    let response = false;
+    if (foundMessage.type === "IMAGE" && foundMessage.image) {
+      let extension = foundMessage.image.split(".");
+      extension = extension[extension.length - 1];
+
+      response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+        filetype: extension,
+        url: foundMessage.image
+      });
+
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
+    } else if (foundMessage.type === "FILE" && foundMessage.file) {
+      let extension = foundMessage.file.split(".");
+      extension = extension[extension.length - 1];
+
+      response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+        filetype: extension,
+        url: foundMessage.file
+      });
+
+    } else if (foundMessage.type === "AUTOREPLY") {
+      response = await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      }); 
+    } else {
+      response = await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      }); 
+      let calculate = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", calculate);
+    }
+
+    if (!response || response.data.status === false) {
       await collection("ScheduleMessages").updateOne(
         {
           _id: foundMessage._id,
         },
         {
           $set: {
-            errorMessage: validPhone,
+            errorMessage: JSON.stringify(response.data),
             errorAt: dayjs().toISOString(),
             _updatedAt: dayjs().toISOString(),
           },
         }
-      );
-      console.log(
-        dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        " ",
-        `${foundMessage.phone} dont have whatsapp!`
-      );
-      return false;
-    }
-    let result;
-    if (foundMessage.type === "IMAGE") {
-      const splitFilename = foundMessage.image.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = new Promise((resolve, reject) => {
-        client
-          .sendImage(
-            `${foundMessage.phone}@c.us`,
-            `${foundMessage.image}`,
-            `${filename}`,
-            `${foundMessage.message}`
-          )
-          .then((result) => {
-            resolve("success");
-          })
-          .catch((error) => {
-            console.log("error", error);
-            resolve(false);
-          });
-      });
-    } else if (foundMessage.type === "FILE") {
-      const files = await getDocumentFromUrl(foundMessage.file);
-      const splitFilename = foundMessage.file.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-      if (files) {
-        new Promise((resolve, reject) => {
-          client
-            .sendFile(
-              `${foundMessage.phone}@c.us`,
-              `${foundMessage.file}`,
-              `${filename}`,
-              `${filename}`
-            )
-            .then((result) => {
-              resolve("success");
-            })
-            .catch((error) => {
-              console.log("error", error);
-              resolve(false);
-            });
-        });
-      } else {
-        await collection("ScheduleMessages").updateOne(
-          {
-            _id: foundMessage._id,
-          },
-          {
-            $set: {
-              errorMessage: "File tidak terkirim",
-              errorAt: dayjs().toISOString(),
-              _updatedAt: dayjs().toISOString(),
-            },
-          }
-        );
-      }
-    } else if (foundMessage.type === "AUTOREPLY") {
-      result = await client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-    } else {
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-      let calculate = await calculateMessage(collection);
-      pusher.trigger("whatsapp-gateway", "message", calculate);
-    }
-
-    if (!result) {
-      console.warn(
-        dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        " ",
-        "Whatsapp not connected!"
       );
     } else {
       await collection("ScheduleMessages").updateOne(
@@ -617,13 +408,13 @@ const sendMessageSchedule = async (client, cache, collection) => {
       },
       {
         $set: {
-          errorMessage: JSON.stringify(e),
+          errorMessage: JSON.stringify(e.response),
           errorAt: dayjs().toISOString(),
           _updatedAt: dayjs().toISOString(),
         },
       }
     );
-    console.log(e);
+    console.log(e.response);
   }
 
   return true;
