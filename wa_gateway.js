@@ -136,7 +136,12 @@ const sendMessage = async (cache, collection) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       let extension = foundMessage.image.split(".");
       extension = extension[extension.length - 1];
-
+      await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      }); 
       response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
@@ -152,7 +157,12 @@ const sendMessage = async (cache, collection) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       let extension = foundMessage.file.split(".");
       extension = extension[extension.length - 1];
-
+      await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      }); 
       response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
@@ -326,7 +336,12 @@ const sendMessageSchedule = async (cache, collection) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       let extension = foundMessage.image.split(".");
       extension = extension[extension.length - 1];
-
+      await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      });
       response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
@@ -342,7 +357,12 @@ const sendMessageSchedule = async (cache, collection) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       let extension = foundMessage.file.split(".");
       extension = extension[extension.length - 1];
-
+      await axios.post("https://my.kirimwa-aja.com/api/message-api.php", {
+        api_key: API_KEY,
+        sender: ID_PENGIRIM,
+        number: foundMessage.phone,
+        message: foundMessage.message,
+      });
       response = await axios.post("https://my.kirimwa-aja.com/api/media-api.php", {
         api_key: API_KEY,
         sender: ID_PENGIRIM,
