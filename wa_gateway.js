@@ -217,7 +217,7 @@ const sendMessage = async (cache, collection) => {
       },
       {
         $set: {
-          errorMessage: JSON.stringify(e.response),
+          errorMessage: JSON.stringify(e),
           errorAt: dayjs().toISOString(),
           _updatedAt: dayjs().toISOString(),
         },
@@ -408,7 +408,7 @@ const sendMessageSchedule = async (cache, collection) => {
       },
       {
         $set: {
-          errorMessage: JSON.stringify(e.response),
+          errorMessage: JSON.stringify(e),
           errorAt: dayjs().toISOString(),
           _updatedAt: dayjs().toISOString(),
         },
