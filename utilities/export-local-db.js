@@ -1,6 +1,8 @@
 require("dotenv").config();
 const fs = require("fs");
 const shelljs = require("shelljs");
+const dayjs = require("dayjs");
+const yesno = require("yesno");
 
 const { MongoClient } = require("mongodb");
 let userAndPass = "";
@@ -19,13 +21,11 @@ if (
   console.log("Incomplete environment variables. Process exitting...");
   process.exit(1);
 }
-const MONGO_URL = `mongodb://${userAndPass}${process.env.MONGOD_HOST}:${
-  process.env.MONGOD_PORT
-}/${process.env.MONGOD_DB}${
-  process.env.MONGOD_AUTH_SOURCE
+const MONGO_URL = `mongodb://${userAndPass}${process.env.MONGOD_HOST}:${process.env.MONGOD_PORT
+  }/${process.env.MONGOD_DB}${process.env.MONGOD_AUTH_SOURCE
     ? "?authSource=" + process.env.MONGOD_AUTH_SOURCE
     : ""
-}`;
+  }`;
 
 const start = async () => {
   try {
@@ -45,8 +45,21 @@ const start = async () => {
       recursive: true
     });
 
+    const today = await yesno({
+      question: "Backup only today? (y/n)"
+    });
+    
+    let query = {};
+
+    if (today) {
+      query["_createdAt"] = {
+        $gte: dayjs().startOf("day").toISOString(),
+        $lte: dayjs().endOf("day").toISOString(),
+      }
+    }
+
     for (const collection of collections) {
-      let query = {};
+
       const data = await db
         .collection(collection.name)
         .find(query)
