@@ -143,17 +143,17 @@ const sendMessage = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       let extension = foundMessage.image.split(".");
       extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      }, config);
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
         url: foundMessage.image
-      }), config);
+      }, config);
 
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
@@ -161,24 +161,24 @@ const sendMessage = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       let extension = foundMessage.file.split(".");
       extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
+      await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      }, config);
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
         url: foundMessage.image
-      }), config);
+      }, config);
 
     } else {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
+      }, config);
       result = true;
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
@@ -338,17 +338,17 @@ const sendMessageSchedule = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       let extension = foundMessage.image.split(".");
       extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      }, config);
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
         url: foundMessage.image
-      }), config);
+      }, config);
 
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
@@ -356,30 +356,30 @@ const sendMessageSchedule = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       let extension = foundMessage.file.split(".");
       extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
+      }, config);
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
         url: foundMessage.image
-      }), config);
+      }, config);
 
     } else if (foundMessage.type === "AUTOREPLY") {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
+      }, config);
     } else {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
-      }), config);
+      }, config);
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
     }
