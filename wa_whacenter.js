@@ -173,6 +173,9 @@ const sendMessage = async (cache, collection, config) => {
       }), config);
 
     } else {
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
       response = await axios.post("https://app.whacenter.com/api/send", qs.stringify({
         device_id: DEVICE_ID,
         number: foundMessage.phone,
@@ -181,9 +184,6 @@ const sendMessage = async (cache, collection, config) => {
       result = true;
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
-      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
-      var stringResult = JSON.stringify(foundMessage);
-      await cache.set(cacheKey, stringResult);
     }
 
     if (!response || response.data.status === false) {
@@ -374,6 +374,9 @@ const sendMessageSchedule = async (cache, collection, config) => {
         message: foundMessage.message,
       }), config);
     } else {
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
       response = await axios.post("https://app.whacenter.com/api/send", qs.stringify({
         device_id: DEVICE_ID,
         number: foundMessage.phone,
