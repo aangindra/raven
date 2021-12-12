@@ -46,5 +46,5 @@ pm2 start -n api index.js --silent
 
 ```sh
 pm2 delete --silent wa_{phone}
-pm2 start -n wa_{phone} wa_gateway.js --silent
+pm2 start -n wa-{phone} wa_gateway.js --silent
 ```
