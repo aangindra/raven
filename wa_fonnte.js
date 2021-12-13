@@ -33,7 +33,7 @@ const start = async () => {
   schedule.scheduleJob("*/10 * * * * *", async () => {
 
     await sendMessage(cache, collection, config);
-    await sendMessageSchedule(cache, collection, config);
+    // await sendMessageSchedule(cache, collection, config);
 
   });
   return "success";
@@ -70,32 +70,45 @@ const sendMessage = async (cache, collection, config) => {
     await cache.set(cacheKeySenderLists, stringResultSenderLists);
   }
 
-  const foundMessage = await collection("Messages").findOne({
-    sender: WA_SESSION,
-    $and: [
-      {
-        phone: {
-          $ne: "",
-        },
-        phone: {
-          $nin: listSenders,
-        },
-      },
-    ],
-    $or: [
-      {
-        sentAt: {
-          $exists: false,
-        },
-        errorAt: {
-          $exists: false,
-        },
-      },
-    ],
-    _deletedAt: {
-      $exists: false,
-    },
-  });
+  // const foundMessage = await collection("Messages").findOne({
+  //   sender: WA_SESSION,
+  //   $and: [
+  //     {
+  //       phone: {
+  //         $ne: "",
+  //       },
+  //       phone: {
+  //         $nin: listSenders,
+  //       },
+  //     },
+  //   ],
+  //   $or: [
+  //     {
+  //       sentAt: {
+  //         $exists: false,
+  //       },
+  //       errorAt: {
+  //         $exists: false,
+  //       },
+  //     },
+  //   ],
+  //   _deletedAt: {
+  //     $exists: false,
+  //   },
+  // });
+
+  const foundMessage = {
+    "_id": "cb6ca1db-0e39-42ca-9ccc-d8402c8315bc",
+    "sender": "628973787777",
+    "phone": "6282211992455",
+    "message": "Assalamualaikum wr. wb. Ananda Muhammad Reedho Ar-Rabbani telah membayar tagihan SPP SMP 2021/2022 sebesar Rp. 625.000 pada 12/12/2021\n\nYayasan Islam Terpadu Insan Kamil Sidoarjo\nVia *School Talk*\nhttp://softwaresekolah.co.id",
+    "type": "FILE",
+    "isScheduled": false,
+    "PREFIX": "INKA",
+    "_createdAt": "2021-12-13T00:29:13.625Z",
+    "_updatedAt": "2021-12-13T00:35:20.232Z",
+    "file": "https://schooltalk.sgp1.digitaloceanspaces.com/StudentBillReceipt/04ac9688-4a44-4160-9e16-0882561da903.pdf"
+  }
 
   if (!foundMessage) {
     console.log(
@@ -147,12 +160,14 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
       response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
-        url: foundMessage.image
+        url: foundMessage.image,
+        delay: "10",
       }), config);
 
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
@@ -161,7 +176,7 @@ const sendMessage = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       // let extension = foundMessage.file.split(".");
       // extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
+      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
@@ -170,7 +185,8 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
-        url: foundMessage.file
+        url: foundMessage.file,
+        delay: "10",
       }), config);
 
     } else {
@@ -178,6 +194,7 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
       result = true;
       let calculate = await calculateMessage(collection);
@@ -186,6 +203,8 @@ const sendMessage = async (cache, collection, config) => {
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
     }
+
+    console.log(response.data)
 
     if (!response || response.data.status === false) {
       await collection("Messages").updateOne(
@@ -343,12 +362,14 @@ const sendMessageSchedule = async (cache, collection, config) => {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
       response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
-        url: foundMessage.image
+        url: foundMessage.image,
+        delay: "10",
       }), config);
 
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
@@ -361,12 +382,14 @@ const sendMessageSchedule = async (cache, collection, config) => {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
+      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
-        url: foundMessage.file
+        url: foundMessage.file,
+        delay: "10",
       }), config);
 
     } else if (foundMessage.type === "AUTOREPLY") {
@@ -374,12 +397,14 @@ const sendMessageSchedule = async (cache, collection, config) => {
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
     } else {
       response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
+        delay: "10",
       }), config);
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
