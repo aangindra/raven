@@ -141,8 +141,8 @@ const sendMessage = async (cache, collection, config) => {
     let result;
     let response = false;
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
-      let extension = foundMessage.image.split(".");
-      extension = extension[extension.length - 1];
+      // let extension = foundMessage.image.split(".");
+      // extension = extension[extension.length - 1];
       await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -159,8 +159,8 @@ const sendMessage = async (cache, collection, config) => {
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
-      let extension = foundMessage.file.split(".");
-      extension = extension[extension.length - 1];
+      // let extension = foundMessage.file.split(".");
+      // extension = extension[extension.length - 1];
       await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -337,8 +337,8 @@ const sendMessageSchedule = async (cache, collection, config) => {
     let result;
     let response = false;
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
-      let extension = foundMessage.image.split(".");
-      extension = extension[extension.length - 1];
+      // let extension = foundMessage.image.split(".");
+      // extension = extension[extension.length - 1];
       await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -355,8 +355,8 @@ const sendMessageSchedule = async (cache, collection, config) => {
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
-      let extension = foundMessage.file.split(".");
-      extension = extension[extension.length - 1];
+      // let extension = foundMessage.file.split(".");
+      // extension = extension[extension.length - 1];
       await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         type: "text",
