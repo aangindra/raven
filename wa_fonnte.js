@@ -70,45 +70,33 @@ const sendMessage = async (cache, collection, config) => {
     await cache.set(cacheKeySenderLists, stringResultSenderLists);
   }
 
-  // const foundMessage = await collection("Messages").findOne({
-  //   sender: WA_SESSION,
-  //   $and: [
-  //     {
-  //       phone: {
-  //         $ne: "",
-  //       },
-  //       phone: {
-  //         $nin: listSenders,
-  //       },
-  //     },
-  //   ],
-  //   $or: [
-  //     {
-  //       sentAt: {
-  //         $exists: false,
-  //       },
-  //       errorAt: {
-  //         $exists: false,
-  //       },
-  //     },
-  //   ],
-  //   _deletedAt: {
-  //     $exists: false,
-  //   },
-  // });
+  const foundMessage = await collection("Messages").findOne({
+    sender: WA_SESSION,
+    $and: [
+      {
+        phone: {
+          $ne: "",
+        },
+        phone: {
+          $nin: listSenders,
+        },
+      },
+    ],
+    $or: [
+      {
+        sentAt: {
+          $exists: false,
+        },
+        errorAt: {
+          $exists: false,
+        },
+      },
+    ],
+    _deletedAt: {
+      $exists: false,
+    },
+  });
 
-  const foundMessage = {
-    "_id": "cb6ca1db-0e39-42ca-9ccc-d8402c8315bc",
-    "sender": "628973787777",
-    "phone": "6282211992455",
-    "message": "Assalamualaikum wr. wb. Ananda Muhammad Reedho Ar-Rabbani telah membayar tagihan SPP SMP 2021/2022 sebesar Rp. 625.000 pada 12/12/2021\n\nYayasan Islam Terpadu Insan Kamil Sidoarjo\nVia *School Talk*\nhttp://softwaresekolah.co.id",
-    "type": "FILE",
-    "isScheduled": false,
-    "PREFIX": "INKA",
-    "_createdAt": "2021-12-13T00:29:13.625Z",
-    "_updatedAt": "2021-12-13T00:35:20.232Z",
-    "file": "https://schooltalk.sgp1.digitaloceanspaces.com/StudentBillReceipt/04ac9688-4a44-4160-9e16-0882561da903.pdf"
-  }
 
   if (!foundMessage) {
     console.log(
