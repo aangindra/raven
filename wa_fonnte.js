@@ -169,8 +169,8 @@ const sendMessage = async (cache, collection, config) => {
       response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
-        type: "image",
-        url: foundMessage.image
+        type: "file",
+        url: foundMessage.file
       }), config);
 
     } else {
@@ -365,8 +365,8 @@ const sendMessageSchedule = async (cache, collection, config) => {
       response = await axios.post("https://hp.fonnte.com/api/send_message.php",qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
-        type: "image",
-        url: foundMessage.image
+        type: "file",
+        url: foundMessage.file
       }), config);
 
     } else if (foundMessage.type === "AUTOREPLY") {
