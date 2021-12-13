@@ -12,7 +12,7 @@ const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
-const { API_KEY_FONNTE, ID_PENGIRIM, PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
+const { API_URL_FONNTE, API_KEY_FONNTE, ID_PENGIRIM, PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
 
 const start = async () => {
@@ -156,13 +156,13 @@ const sendMessage = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       // let extension = foundMessage.image.split(".");
       // extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
         delay: "10",
       }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
@@ -176,12 +176,12 @@ const sendMessage = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       // let extension = foundMessage.file.split(".");
       // extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
       }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
@@ -190,7 +190,7 @@ const sendMessage = async (cache, collection, config) => {
       }), config);
 
     } else {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
@@ -358,13 +358,13 @@ const sendMessageSchedule = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       // let extension = foundMessage.image.split(".");
       // extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
         delay: "10",
       }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
@@ -378,13 +378,13 @@ const sendMessageSchedule = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       // let extension = foundMessage.file.split(".");
       // extension = extension[extension.length - 1];
-      await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
         delay: "10",
       }), config);
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
@@ -393,14 +393,14 @@ const sendMessageSchedule = async (cache, collection, config) => {
       }), config);
 
     } else if (foundMessage.type === "AUTOREPLY") {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
         delay: "10",
       }), config);
     } else {
-      response = await axios.post("https://hp.fonnte.com/api/send_message.php", qs.stringify({
+      response = await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
         text: foundMessage.message,
