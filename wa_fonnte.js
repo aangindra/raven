@@ -33,7 +33,7 @@ const start = async () => {
   schedule.scheduleJob("*/10 * * * * *", async () => {
 
     await sendMessage(cache, collection, config);
-    // await sendMessageSchedule(cache, collection, config);
+    await sendMessageSchedule(cache, collection, config);
 
   });
   return "success";
