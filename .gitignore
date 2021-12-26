@@ -6,5 +6,5 @@ release/
 *.xlsx
 log_qr/
 tokens/
-/tokens
+saved_tokens
 *.tar.zst

@@ -1,5 +1,5 @@
 require("dotenv").config();
-const venom = require("venom-bot");
+const { Client, Location, List, Buttons } = require('whatsapp-web.js');
 const { writeFileSync, existsSync, mkdirSync } = require("fs");
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
@@ -24,11 +24,12 @@ const browserArgs = [
 ];
 
 const start = async () => {
-  let currentSession = {};
-  if (fs.existsSync(__dirname + `/saved_tokens/${WA_SESSION}.data.json`)) {
-    //file exists
-    currentSession = JSON.parse(fs.readFileSync(__dirname + `/saved_tokens/${WA_SESSION}.data.json`, 'utf8'));
+  const SESSION_FILE_PATH = `./saved_sessions/${WA_SESSION}.data.json`;
+  let sessionCfg;
+  if (fs.existsSync(SESSION_FILE_PATH)) {
+    sessionCfg = require(SESSION_FILE_PATH);
   }
+
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
@@ -38,89 +39,49 @@ const start = async () => {
   });
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
-  const client = await venom.create(
-    WA_SESSION,
-    (base64Qr, asciiQR) => {
-      if (!existsSync(`./log_qr`)) {
-        mkdirSync(`./log_qr`, { recursive: true });
-      }
-      exportQR(base64Qr, `log_qr/qrCode_${WA_SESSION}.png`);
-    },
-    (statusSession) => {
-      console.log(statusSession);
-    },
-    {
-      folderNameToken: "tokens",
-      mkdirFolderToken: "",
-      headless: true,
-      devtools: false,
-      useChrome: true,
-      debug: false,
-      logQR: false,
-      browserArgs: ["--no-sandbox"],
-      refreshQR: 15000,
-      autoClose: false,
-      disableSpins: true,
-      disableWelcome: true,
-    },
-    currentSession ? { ...currentSession } : {}
-  );
-  client.onStateChange((state) => {
-    const conflits = [
-      venom.SocketState.CONFLICT,
-      venom.SocketState.UNPAIRED,
-      venom.SocketState.UNLAUNCHED,
-    ];
-    if (conflits.includes(state)) {
-      client.useHere();
-      if (state === "UNPAIRED") {
-        console.log("WA DISCONNECTED!");
-      }
-    }
+
+  const client = new Client({
+    session: sessionCfg
   });
-  client.onMessage(async (message) => {
-    const foundAutoReply = await collection("WhatsappAutoReplies").findOne({
-      sender: WA_SESSION,
+
+  client.initialize();
+
+  client.on('authenticated', (session) => {
+    console.log('authenticated!')
+    sessionData = session;
+    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), (err) => {
+      if (err) {
+        console.error(err);
+      }
     });
-    if (!foundAutoReply) {
-      return;
-    }
-    if (message.isGroupMsg === false) {
-      let results = await calculateMessage(collection);
-      pusher.trigger("whatsapp-gateway", "message", results);
-      let receivedPhone = message.from;
-      receivedPhone = receivedPhone.replace(/\D/g, "");
-      if (receivedPhone) {
-        try {
-          await collection("Messages").insertOne({
-            _id: uuidV4(),
-            sender: WA_SESSION,
-            phone: receivedPhone,
-            checkSendByGroupContacts: false,
-            groupIds: [],
-            message: foundAutoReply.message,
-            type: "AUTOREPLY",
-            file: "",
-            image: "",
-            isScheduled: false,
-            _createdAt: new Date().toISOString(),
-            _updatedAt: new Date().toISOString(),
-          });
-        } catch (e) {
-          console.log(e);
-        }
-      }
+  });
+
+
+
+  client.on("message", (msg) => {
+    if (msg.body === "ping") {
+      client.sendMessage('628973787777@c.us', 'test yu');
     }
   });
-  const isConnected = await client.isConnected();
-  schedule.scheduleJob("*/10 * * * * *", async () => {
-    if (isConnected) {
-      await sendMessage(client, cache, collection);
-      await sendMessageSchedule(client, cache, collection);
-    } else {
-      console.log("Whatsapp not connected!");
-    }
+
+  let result
+
+  client.on("ready", () => {
+    console.log("ready sending message...");
+    result = true
   });
+
+  // console.log("status", client.getState());
+  // const isConnected = result;
+  // schedule.scheduleJob("*/10 * * * * *", async () => {
+  //   if (isConnected) {
+  //     await sendMessage({ client: result, cache, collection });
+  //     await sendMessageSchedule({ client: result, cache, collection });
+  //   } else {
+  //     console.log("Whatsapp not connected!");
+  //   }
+  // });
+
   return "success";
 };
 
