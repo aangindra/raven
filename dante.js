@@ -7,24 +7,16 @@ const { verifyToken, authenticate } = require("./auth/verifyToken");
 
 const dayjs = require("dayjs");
 const fs = require("fs");
-const fetchBase64 = require("fetch-base64");
 const uuidV4 = require("uuid/v4");
-const { Client, Location, List, Buttons } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
+const { Client } = require('whatsapp-web.js');
+const shell = require("shelljs");
 const mongodbConnection = require("./mongodb_connection");
 const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
-const browserArgs = [
-  '--disable-web-security', '--no-sandbox', '--disable-web-security',
-  '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
-  '--disable-offline-load-stale-cache', '--disk-cache-size=0',
-  '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
-  '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
-  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update',
-  '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
-];
+const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
+  ? process.env.SENDER_LOAD_BALANCE
+  : "";
 
 const SESSION_FILE_PATH = './sessions/session.json';
 let sessionCfg;
@@ -65,6 +57,10 @@ const start = async () => {
       type: () => true,
     })
   );
+
+  app.get("/", async (req, res) => {
+    return res.status(200).json({ message: "Welcome to API Raven 1.0.0" });
+  });
 
   app.post(
     "/login_whatsapp",
@@ -108,6 +104,9 @@ const start = async () => {
                 },
               }
             );
+
+            shell.exec(`pm2 reload wa-${session}`);
+
             resolve("isAuthenticated")
           })
         });
@@ -179,11 +178,119 @@ const start = async () => {
       .json({ message: "success me!", attributes: Account });
   });
 
+  app.post(
+    "/send_message",
+    // verifyToken,
+    [
+      bodyValidator("sender").notEmpty().withMessage("sender cannot be empty!"),
+      bodyValidator("phone").notEmpty().withMessage("phone cannot be empty!"),
+      bodyValidator("message")
+        .notEmpty()
+        .withMessage("message cannot be empty!"),
+      bodyValidator("type").notEmpty().withMessage("type cannot be empty!"),
+    ],
+    async (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      const { phone, message, type, image, file, sender, PREFIX } = req.body;
+      const activeSession = await authenticate(req);
+      if (!activeSession) {
+        return res.status(403).json({ message: "Token invalid!" });
+      }
+      const foundAccount = await collection("Accounts").findOne({
+        _id: activeSession._id,
+      });
+      const listDevices = await collection("Devices")
+        .find({
+          $or: [{
+            accountIds: {
+              $in: [foundAccount._id],
+            },
+          }, {
+            accountId: foundAccount.username
+          }
+          ],
+        })
+        .toArray();
+
+      const devices = listDevices.map((device) => device.phone);
+      if (!devices.includes(sender)) {
+        if (sender !== "6283143574597") {
+          return res.status(404).json({ message: "Sender not found!" });
+        }
+      }
+      if (!["TEXT", "IMAGE", "FILE"].includes(type)) {
+        return res
+          .status(400)
+          .json({ errors: { message: "Wrong type message!" } });
+      }
+
+      console.log(sender);
+
+      let newMessage = {
+        _id: uuidV4(),
+        sender: sender === "6283143574597" ? "6285157574640" : sender,
+        phone: "",
+        message,
+        type,
+        isScheduled: false,
+        PREFIX,
+        _createdAt: dayjs().toISOString(),
+        _updatedAt: dayjs().toISOString(),
+      };
+      if (type === "IMAGE" && image) {
+        newMessage.image = image;
+      } else if (type === "FILE" && file) {
+        newMessage.file = file;
+      } else {
+        newMessage.type = "TEXT";
+      }
+
+      const phones = phone.split(",");
+      for (let number of phones) {
+        newMessage.phone = number.replace(/[^0-9.]/g, "");
+        newMessage = generatedLoadBalanceMessage(newMessage);
+        await collection("Messages").insertOne(newMessage);
+      }
+      let results = await calculateMessage(collection);
+      pusher.trigger("whatsapp-gateway", "message", results);
+      console.log(
+        dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        " ",
+        `POST /send_message => sender ${newMessage.sender}`
+      );
+      return res.status(200).json({ message: "Success send message!" });
+    }
+  );
+
   const PORT = process.env.API_PORT || 3000;
   const serverAfterListening = app.listen(PORT, () => {
     console.log(`WhatsApp API server running on port ${PORT}.`);
   });
   serverAfterListening.setTimeout(600000);
+};
+
+const generatedLoadBalanceMessage = (message) => {
+  const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
+  const phone = parseInt(message.phone);
+  let result = message;
+
+  if (
+    loadBalancedSender.length > 1 &&
+    !["6283179715536", "628973787777"].includes(result.sender)
+    && loadBalancedSender.includes(result.sender)
+  ) {
+    if (phone % 2 === 0) {
+      result.sender = loadBalancedSender[0];
+      console.log("hit even!");
+    } else {
+      result.sender = loadBalancedSender[1];
+      console.log("hit odd!");
+    }
+  }
+  return result;
 };
 
 start();
