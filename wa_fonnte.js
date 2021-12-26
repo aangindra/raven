@@ -164,6 +164,7 @@ const sendMessage = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       // let extension = foundMessage.file.split(".");
       // extension = extension[extension.length - 1];
+      let url = foundMessage.file;
       await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -173,7 +174,7 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
-        url: foundMessage.file,
+        url: url.replace("jpeg", "jpg"),
         delay: "10",
       }), config);
 
