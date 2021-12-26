@@ -33,10 +33,6 @@ if (fs.existsSync(SESSION_FILE_PATH)) {
 }
 
 const start = async () => {
-  console.log(dayjs().startOf("day").toISOString())
-  console.log(dayjs().endOf("day").toISOString())
-
-  throw new Error("...")
   if (!fs.existsSync(`./saved_sessions`)) {
     fs.mkdirSync(`./saved_sessions`, { recursive: true });
   }
@@ -165,6 +161,23 @@ const start = async () => {
       return res.status(200).json({ message: "Disconnect successfully!", status: "notLogged" });
     }
   );
+
+  app.get("/me", verifyToken, async (req, res) => {
+    const activeSession = await authenticate(req);
+    const Account = await collection("Accounts").findOne(
+      {
+        _id: activeSession._id,
+      },
+      {
+        projection: {
+          password: 0,
+        },
+      }
+    );
+    return res
+      .status(200)
+      .json({ message: "success me!", attributes: Account });
+  });
 
   const PORT = process.env.API_PORT || 3000;
   const serverAfterListening = app.listen(PORT, () => {

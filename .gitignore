@@ -7,4 +7,5 @@ release/
 log_qr/
 tokens/
 saved_tokens
+saved_sessions
 *.tar.zst

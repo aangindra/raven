@@ -1,12 +1,9 @@
 require("dotenv").config();
-const { Client, Location, List, Buttons } = require('whatsapp-web.js');
-const { writeFileSync, existsSync, mkdirSync } = require("fs");
+const { Client, Location, List, Buttons, MessageMedia } = require('whatsapp-web.js');
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
-const axios = require("axios");
 const fs = require("fs");
-const fetchBase64 = require("fetch-base64");
-const uuidV4 = require("uuid/v4");
+const { isEmpty } = require("lodash");
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
@@ -66,21 +63,22 @@ const start = async () => {
 
   let result
 
-  client.on("ready", () => {
-    console.log("ready sending message...");
-    result = true
-  });
+  result = await new Promise((resolve, reject) => {
+    client.on("ready", () => {
+      console.log("ready sending message...");
+      resolve(true)
+    });
+  })
 
-  // console.log("status", client.getState());
-  // const isConnected = result;
-  // schedule.scheduleJob("*/10 * * * * *", async () => {
-  //   if (isConnected) {
-  //     await sendMessage({ client: result, cache, collection });
-  //     await sendMessageSchedule({ client: result, cache, collection });
-  //   } else {
-  //     console.log("Whatsapp not connected!");
-  //   }
-  // });
+  const isConnected = result;
+  schedule.scheduleJob("*/10 * * * * *", async () => {
+    if (isConnected) {
+      await sendMessage(client, cache, collection);
+      await sendMessageSchedule( client, cache, collection );
+    } else {
+      console.log("Whatsapp not connected!");
+    }
+  });
 
   return "success";
 };
@@ -206,10 +204,11 @@ const sendMessage = async (client, cache, collection) => {
     }
   }
   try {
-    const validPhone = await client.getNumberProfile(
+    const validPhone = await client.getNumberId(
       `${foundMessage.phone}@c.us`
     );
-    if (validPhone === 404) {
+
+    if (isEmpty(validPhone)) {
       await collection("Messages").updateOne(
         {
           _id: foundMessage._id,
@@ -229,54 +228,23 @@ const sendMessage = async (client, cache, collection) => {
       );
       return false;
     }
+
     let result;
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
-      const splitFilename = foundMessage.image.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = new Promise((resolve, reject) => {
-        client
-          .sendImage(
-            `${foundMessage.phone}@c.us`,
-            `${foundMessage.image}`,
-            `${filename}`,
-            `${foundMessage.message}`
-          )
-          .then((result) => {
-            resolve("success");
-          })
-          .catch((error) => {
-            console.log("error", error);
-            resolve(false);
-          });
-      });
+      const media = await MessageMedia.fromUrl(foundMessage.image);
+      client.sendMessage(`${foundMessage.phone}@c.us`, media);
+      client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
       var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
       var stringResult = JSON.stringify(foundMessage);
       await cache.set(cacheKey, stringResult);
+      result = true;
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
-      const files = await getDocumentFromUrl(foundMessage.file);
-      const splitFilename = foundMessage.file.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-      if (files) {
-        new Promise((resolve, reject) => {
-          client
-            .sendFileFromBase64(
-              `${foundMessage.phone}@c.us`,
-              `${files}`,
-              `${filename}`,
-              `${filename}`
-            )
-            .then((result) => {
-              resolve("success");
-            })
-            .catch((error) => {
-              console.log("error", error);
-              resolve(false);
-            });
-        });
+      const media = await MessageMedia.fromUrl(foundMessage.image);
+
+      if (media) {
+        client.sendMessage(`${foundMessage.phone}@c.us`, media);
+        client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
+        result = true;
         var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
         var stringResult = JSON.stringify(foundMessage);
         await cache.set(cacheKey, stringResult);
@@ -295,7 +263,7 @@ const sendMessage = async (client, cache, collection) => {
         );
       }
     } else {
-      client.sendText(`${foundMessage.phone}@c.us`, foundMessage.message);
+      client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
       result = true;
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
@@ -345,6 +313,7 @@ const sendMessage = async (client, cache, collection) => {
   }
   return true;
 };
+
 const sendMessageSchedule = async (client, cache, collection) => {
   const pusher = new Pusher({
     appId: PUSHER_APP_ID,
@@ -485,51 +454,25 @@ const sendMessageSchedule = async (client, cache, collection) => {
     }
     let result;
     if (foundMessage.type === "IMAGE") {
-      const splitFilename = foundMessage.image.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = new Promise((resolve, reject) => {
-        client
-          .sendImage(
-            `${foundMessage.phone}@c.us`,
-            `${foundMessage.image}`,
-            `${filename}`,
-            `${foundMessage.message}`
-          )
-          .then((result) => {
-            resolve("success");
-          })
-          .catch((error) => {
-            console.log("error", error);
-            resolve(false);
-          });
-      });
+      const media = await MessageMedia.fromUrl(foundMessage.image);
+      client.sendMessage(`${foundMessage.phone}@c.us`, media);
+      client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
+      var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+      var stringResult = JSON.stringify(foundMessage);
+      await cache.set(cacheKey, stringResult);
+      result = true;
     } else if (foundMessage.type === "FILE") {
-      const files = await getDocumentFromUrl(foundMessage.file);
-      const splitFilename = foundMessage.file.split("/");
-      const filename = splitFilename[splitFilename.length - 1];
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
-      if (files) {
-        new Promise((resolve, reject) => {
-          client
-            .sendFile(
-              `${foundMessage.phone}@c.us`,
-              `${foundMessage.file}`,
-              `${filename}`,
-              `${filename}`
-            )
-            .then((result) => {
-              resolve("success");
-            })
-            .catch((error) => {
-              console.log("error", error);
-              resolve(false);
-            });
-        });
+      const media = await MessageMedia.fromUrl(foundMessage.image);
+
+      if (media) {
+        client.sendMessage(`${foundMessage.phone}@c.us`, media);
+        client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
+        result = true;
+        var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
+        var stringResult = JSON.stringify(foundMessage);
+        await cache.set(cacheKey, stringResult);
       } else {
-        await collection("ScheduleMessages").updateOne(
+        await collection("Messages").updateOne(
           {
             _id: foundMessage._id,
           },
@@ -543,15 +486,13 @@ const sendMessageSchedule = async (client, cache, collection) => {
         );
       }
     } else if (foundMessage.type === "AUTOREPLY") {
-      result = await client.sendText(
+      result = await client.sendMessage(
         `${foundMessage.phone}@c.us`,
         foundMessage.message
       );
     } else {
-      result = client.sendText(
-        `${foundMessage.phone}@c.us`,
-        foundMessage.message
-      );
+      client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
+      result = true;
       let calculate = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", calculate);
     }
@@ -597,33 +538,6 @@ const sendMessageSchedule = async (client, cache, collection) => {
   }
 
   return true;
-};
-const getDocumentFromUrl = async (url) => {
-  let res;
-  try {
-    // res = await axios.get(url, {
-    // 	responseType: 'arraybuffer'
-    // });
-    // return `data:${res.headers['content-type']};base64,${Buffer.from(
-    // 	String.fromCharCode(...new Uint8Array(res.data)),
-    // 	'binary'
-    // ).toString('base64')}`;
-    res = await fetchBase64.remote(url);
-    if (res && res.length > 1) {
-      return res[1];
-    } else {
-      return false;
-    }
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-};
-// Writes QR in specified path
-const exportQR = (qrCode, path) => {
-  qrCode = qrCode.replace("data:image/png;base64,", "");
-  const imageBuffer = Buffer.from(qrCode, "base64");
-  writeFileSync(path, imageBuffer);
 };
 
 const updateStatusDevice = async (phone, status, collection) => {
