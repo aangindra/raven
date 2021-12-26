@@ -144,6 +144,7 @@ const sendMessage = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       // let extension = foundMessage.image.split(".");
       // extension = extension[extension.length - 1];
+      let url = foundMessage.image;
       await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -154,7 +155,7 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
-        url: foundMessage.image,
+        url: url.replace("jpeg", "jpg"),
         delay: "10",
       }), config);
 
