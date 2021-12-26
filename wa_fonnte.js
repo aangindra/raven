@@ -144,7 +144,6 @@ const sendMessage = async (cache, collection, config) => {
     if (foundMessage.type === "IMAGE" && foundMessage.image) {
       // let extension = foundMessage.image.split(".");
       // extension = extension[extension.length - 1];
-      let url = foundMessage.image;
       await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -155,7 +154,7 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "image",
-        url: url.replace("jpeg", "jpg"),
+        url: foundMessage.image,
         delay: "10",
       }), config);
 
@@ -165,7 +164,6 @@ const sendMessage = async (cache, collection, config) => {
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       // let extension = foundMessage.file.split(".");
       // extension = extension[extension.length - 1];
-      let url = foundMessage.file;
       await axios.post(`https://${API_URL_FONNTE}/api/send_message.php`, qs.stringify({
         phone: foundMessage.phone,
         type: "text",
@@ -175,7 +173,7 @@ const sendMessage = async (cache, collection, config) => {
         phone: foundMessage.phone,
         // text: foundMessage.message,
         type: "file",
-        url: url.replace("jpeg", "jpg"),
+        url: foundMessage.image,
         delay: "10",
       }), config);
 
