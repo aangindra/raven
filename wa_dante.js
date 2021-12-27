@@ -3,9 +3,9 @@ const { Client, MessageMedia } = require('whatsapp-web.js');
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
 const fs = require("fs");
-// const mime = require('mime');
-// const fetch = require('node-fetch');
-// const { URL } = require('url');
+const mime = require('mime');
+const fetch = require('node-fetch');
+const { URL } = require('url');
 const uuidV4 = require("uuid/v4");
 const { isEmpty } = require("lodash");
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
@@ -243,9 +243,9 @@ const sendMessage = async (client, cache, collection) => {
       await cache.set(cacheKey, stringResult);
       result = true;
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
-      // const document = await getDocumentFromUrl(foundMessage.file);
-      // const media = new MessageMedia(document.mimetype, document.data, document.filename);
-      const media = await MessageMedia.fromUrl(foundMessage.file);
+      const document = await getDocumentFromUrl(foundMessage.file);
+      const media = new MessageMedia(document.mimetype, document.data, document.filename);
+      // const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
         client.sendMessage(`${foundMessage.phone}@c.us`, media, { caption: "document" });
@@ -468,9 +468,9 @@ const sendMessageSchedule = async (client, cache, collection) => {
       await cache.set(cacheKey, stringResult);
       result = true;
     } else if (foundMessage.type === "FILE") {
-      // const document = await getDocumentFromUrl(foundMessage.file);
-      // const media = new MessageMedia(document.mimetype, document.data, document.filename);
-      const media = await MessageMedia.fromUrl(foundMessage.file);
+      const document = await getDocumentFromUrl(foundMessage.file);
+      const media = new MessageMedia(document.mimetype, document.data, document.filename);
+      // const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
         client.sendMessage(`${foundMessage.phone}@c.us`, media);
@@ -548,40 +548,40 @@ const sendMessageSchedule = async (client, cache, collection) => {
   return true;
 };
 
-// const getDocumentFromUrl = async (url, options = {}) => {
-//   let mimetype;
+const getDocumentFromUrl = async (url, options = {}) => {
+  let mimetype;
 
-//   if (!options.unsafeMime) {
-//     const pUrl = new URL(url);
-//     mimetype = mime.getType(pUrl.pathname);
+  if (!options.unsafeMime) {
+    const pUrl = new URL(url);
+    mimetype = mime.getType(pUrl.pathname);
 
-//     if (!mimetype)
-//       throw new Error('Unable to determine MIME type');
-//   }
+    if (!mimetype)
+      throw new Error('Unable to determine MIME type');
+  }
 
-//   const reqOptions = Object.assign({ headers: { accept: 'image/* video/* text/* audio/*' } }, options);
-//   const response = await fetch(url, reqOptions);
-//   const resultMime = response.headers.get('Content-Type');
-//   let data = '';
+  const reqOptions = Object.assign({ headers: { accept: 'image/* video/* text/* audio/*' } }, options);
+  const response = await fetch(url, reqOptions);
+  const resultMime = response.headers.get('Content-Type');
+  let data = '';
 
-//   if (response.buffer) {
-//     data = (await response.buffer()).toString('base64');
-//   } else {
-//     const bArray = new Uint8Array(await response.arrayBuffer());
-//     bArray.forEach((b) => {
-//       data += String.fromCharCode(b);
-//     });
-//     data = btoa(data);
-//   }
+  if (response.buffer) {
+    data = (await response.buffer()).toString('base64');
+  } else {
+    const bArray = new Uint8Array(await response.arrayBuffer());
+    bArray.forEach((b) => {
+      data += String.fromCharCode(b);
+    });
+    data = btoa(data);
+  }
 
-//   if (!mimetype)
-//     mimetype = resultMime;
-//   return {
-//     mimetype,
-//     data,
-//     filename: uuidV4(),
-//   }
-// }
+  if (!mimetype)
+    mimetype = resultMime;
+  return {
+    mimetype,
+    data,
+    filename: uuidV4(),
+  }
+}
 
 const updateStatusDevice = async (phone, status, collection) => {
   await collection("Devices").updateOne(
