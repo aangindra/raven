@@ -462,7 +462,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
       await cache.set(cacheKey, stringResult);
       result = true;
     } else if (foundMessage.type === "FILE") {
-      const media = await MessageMedia.fromUrl(foundMessage.image);
+      const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
         client.sendMessage(`${foundMessage.phone}@c.us`, media);
