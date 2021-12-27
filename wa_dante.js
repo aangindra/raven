@@ -74,7 +74,7 @@ const start = async () => {
   schedule.scheduleJob("*/10 * * * * *", async () => {
     if (isConnected) {
       await sendMessage(client, cache, collection);
-      await sendMessageSchedule( client, cache, collection );
+      await sendMessageSchedule(client, cache, collection);
     } else {
       console.log("Whatsapp not connected!");
     }
@@ -242,7 +242,7 @@ const sendMessage = async (client, cache, collection) => {
       const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
-        client.sendMessage(`${foundMessage.phone}@c.us`, media);
+        client.sendMessage(`${foundMessage.phone}@c.us`, media, { caption: "document" });
         client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
         result = true;
         var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
