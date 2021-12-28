@@ -1,5 +1,4 @@
 require("dotenv").config();
-const venom = require("venom-bot");
 const { writeFileSync, existsSync, mkdirSync } = require("fs");
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
