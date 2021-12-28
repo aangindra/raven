@@ -42,6 +42,7 @@ const start = async () => {
   const { cache } = await initRedis();
 
   const client = new Client({
+    puppeteer: { args: browserArgs },
     session: sessionCfg
   });
 
