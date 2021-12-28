@@ -202,6 +202,9 @@ const start = async () => {
       const foundAccount = await collection("Accounts").findOne({
         _id: activeSession._id,
       });
+      if(!foundAccount) {
+        return res.status(400).json({ message: "Token Invalid!" });
+      }
       const listDevices = await collection("Devices")
         .find({
           $or: [{
