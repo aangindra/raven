@@ -435,10 +435,10 @@ const sendMessageSchedule = async (client, cache, collection) => {
     );
   }
   try {
-    const validPhone = await client.getNumberProfile(
+    const validPhone = await client.getNumberId(
       `${foundMessage.phone}@c.us`
     );
-    if (validPhone === 404) {
+    if (isEmpty(validPhone)) {
       await collection("ScheduleMessages").updateOne(
         {
           _id: foundMessage._id,
