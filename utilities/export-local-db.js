@@ -59,7 +59,9 @@ const start = async () => {
     }
 
     for (const collection of collections) {
-
+      if(!["Messages", "ScheduleMessages"].includes(collection.name)) {
+        delete query["_createdAt"];
+      }
       const data = await db
         .collection(collection.name)
         .find(query)
