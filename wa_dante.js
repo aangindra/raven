@@ -60,9 +60,35 @@ const start = async () => {
 
 
 
-  client.on("message", (msg) => {
-    if (msg.body === "ping") {
-      client.sendMessage('628973787777@c.us', 'test yu');
+  client.on("message", async (msg) => {
+    if (msg.id.fromMe === false && msg.hasMedia === false && msg.type === "chat") {
+      var cacheKey = `whatsapp_auto_replies_${WA_SESSION}`;
+      var cacheResult = await cache.getAsync(cacheKey);
+      let foundAutoReply = "";
+
+      if(cacheResult !== null){
+        foundAutoReply = JSON.parse(cacheResult);
+      }else{
+        foundAutoReply = await collection("WhatsappAutoReplies").findOne({
+          sender: WA_SESSION,
+        });
+        await cache.set(cacheKey, JSON.stringify(foundAutoReply));
+      }
+
+      collection("Messages").insertOne({
+        _id: uuidV4(),
+        sender: WA_SESSION,
+        phone: msg.from.replace(/\D/g, ""),
+        checkSendByGroupContacts: false,
+        groupIds: [],
+        message: foundAutoReply.message,
+        type: "AUTOREPLY",
+        file: "",
+        image: "",
+        isScheduled: false,
+        _createdAt: new Date().toISOString(),
+        _updatedAt: new Date().toISOString(),
+      });
     }
   });
 
