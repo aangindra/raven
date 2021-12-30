@@ -79,6 +79,21 @@ const start = async () => {
       collection("Messages").insertOne({
         _id: uuidV4(),
         sender: WA_SESSION,
+        phone: msg.from,
+        checkSendByGroupContacts: false,
+        groupIds: [],
+        message: foundAutoReply.message,
+        type: "AUTOREPLY",
+        file: "",
+        image: "",
+        isScheduled: false,
+        _createdAt: new Date().toISOString(),
+        _updatedAt: new Date().toISOString(),
+      });
+    }else{
+      collection("MessagesLogs").insertOne({
+        _id: uuidV4(),
+        sender: WA_SESSION,
         phone: fromNumber,
         checkSendByGroupContacts: false,
         groupIds: [],
