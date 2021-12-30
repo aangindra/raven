@@ -61,7 +61,8 @@ const start = async () => {
 
 
   client.on("message", async (msg) => {
-    if (msg.id.fromMe === false && msg.hasMedia === false && msg.type === "chat") {
+    const fromNumber =  msg.from.replace(/\D/g, "");
+    if (fromNumber && msg.id.fromMe === false && msg.hasMedia === false && msg.type === "chat") {
       var cacheKey = `whatsapp_auto_replies_${WA_SESSION}`;
       var cacheResult = await cache.getAsync(cacheKey);
       let foundAutoReply = "";
@@ -78,7 +79,7 @@ const start = async () => {
       collection("Messages").insertOne({
         _id: uuidV4(),
         sender: WA_SESSION,
-        phone: msg.from.replace(/\D/g, ""),
+        phone: fromNumber,
         checkSendByGroupContacts: false,
         groupIds: [],
         message: foundAutoReply.message,
