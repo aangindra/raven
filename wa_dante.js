@@ -54,8 +54,9 @@ const start = async () => {
 
 
   client.on("message", async (msg) => {
+    const isFromGroup = msg.from.endsWith('@g.us');
     const fromNumber = msg.from.replace(/\D/g, "");
-    if (fromNumber && msg.id.fromMe === false && msg.hasMedia === false && msg.type === "chat") {
+    if (fromNumber && !isFromGroup && !msg.id.fromMe && !msg.hasMedia && msg.type === "chat") {
       var cacheKey = `whatsapp_auto_replies_${WA_SESSION}`;
       var cacheResult = await cache.getAsync(cacheKey);
       let foundAutoReply = "";
