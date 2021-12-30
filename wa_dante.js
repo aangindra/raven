@@ -31,13 +31,6 @@ const start = async () => {
     sessionCfg = require(SESSION_FILE_PATH);
   }
 
-  const pusher = new Pusher({
-    appId: PUSHER_APP_ID,
-    key: PUSHER_APP_KEY,
-    secret: PUSHER_APP_SECRET,
-    cluster: "ap1",
-    useTLS: true,
-  });
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
 
@@ -61,7 +54,7 @@ const start = async () => {
 
 
   client.on("message", async (msg) => {
-    const fromNumber =  msg.from.replace(/\D/g, "");
+    const fromNumber = msg.from.replace(/\D/g, "");
     if (fromNumber && msg.id.fromMe === false && msg.hasMedia === false && msg.type === "chat") {
       var cacheKey = `whatsapp_auto_replies_${WA_SESSION}`;
       var cacheResult = await cache.getAsync(cacheKey);
@@ -88,6 +81,7 @@ const start = async () => {
         file: "",
         image: "",
         isScheduled: false,
+        response: JSON.stringify(msg),
         _createdAt: new Date().toISOString(),
         _updatedAt: new Date().toISOString(),
       });
@@ -104,6 +98,7 @@ const start = async () => {
         file: "",
         image: "",
         isScheduled: false,
+        response: JSON.stringify(msg),
         _createdAt: new Date().toISOString(),
         _updatedAt: new Date().toISOString(),
       });
