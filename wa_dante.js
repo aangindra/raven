@@ -94,7 +94,7 @@ const start = async () => {
         checkSendByGroupContacts: false,
         groupIds: [],
         fromMessage: msg.body,
-        message: foundAutoReply.message,
+        message: "logs",
         type: "AUTOREPLY",
         file: "",
         image: "",
