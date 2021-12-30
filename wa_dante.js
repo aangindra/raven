@@ -79,7 +79,7 @@ const start = async () => {
       collection("Messages").insertOne({
         _id: uuidV4(),
         sender: WA_SESSION,
-        phone: msg.from,
+        phone: fromNumber,
         checkSendByGroupContacts: false,
         groupIds: [],
         message: foundAutoReply.message,
