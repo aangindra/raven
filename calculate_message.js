@@ -6,6 +6,9 @@ const calculateMessage = async (collection) => {
 
   const countAllMessages = await collection("Messages")
     .find({
+      type: {
+        $ne: "AUTOREPLY"
+      },
       _deletedAt: {
         $exists: false,
       },
@@ -17,6 +20,9 @@ const calculateMessage = async (collection) => {
     .count();
   const countAllErrorMessages = await collection("Messages")
     .find({
+      type: {
+        $ne: "AUTOREPLY"
+      },
       $or: [
         {
           errorAt: {
@@ -40,6 +46,9 @@ const calculateMessage = async (collection) => {
     .count();
   const countAllSentMessages = await collection("Messages")
     .find({
+      type: {
+        $ne: "AUTOREPLY"
+      },
       sentAt: {
         $exists: true,
       },
@@ -54,6 +63,9 @@ const calculateMessage = async (collection) => {
     .count();
   const countAllPendingMessages = await collection("Messages")
     .find({
+      type: {
+        $ne: "AUTOREPLY"
+      },
       sentAt: {
         $exists: false,
       },
