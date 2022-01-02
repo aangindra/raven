@@ -69,7 +69,12 @@ const calculateMessage = async (collection) => {
       },
     })
     .count();
-
+    console.log({
+      countAllMessages,
+      countAllSentMessages,
+      countAllErrorMessages,
+      countAllPendingMessages,
+    })
   return {
     countAllMessages,
     countAllSentMessages,
