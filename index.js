@@ -279,6 +279,15 @@ const start = async () => {
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
+      var ip;
+      if (req.headers['x-forwarded-for']) {
+        ip = req.headers['x-forwarded-for'].split(",")[0];
+      } else if (req.connection && req.connection.remoteAddress) {
+        ip = req.connection.remoteAddress;
+      } else {
+        ip = req.ip;
+      } 
+
       const { phone, message, type, image, file, sender, PREFIX } = req.body;
       const activeSession = await authenticate(req);
       if (!activeSession) {
@@ -314,6 +323,7 @@ const start = async () => {
         type,
         isScheduled: false,
         PREFIX,
+        clientIp: ip,
         _createdAt: dayjs().toISOString(),
         _updatedAt: dayjs().toISOString(),
       };
