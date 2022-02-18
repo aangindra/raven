@@ -24,6 +24,16 @@ if (fs.existsSync(SESSION_FILE_PATH)) {
   sessionCfg = require(SESSION_FILE_PATH);
 }
 
+const browserArgs = [
+  '--disable-web-security', '--no-sandbox', '--disable-web-security', '--disable-gpu',
+  '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
+  '--disable-offline-load-stale-cache', '--disk-cache-size=0', '--disable-software-rasterizer',
+  '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
+  '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
+  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
+  '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
+];
+
 const start = async () => {
   if (!fs.existsSync(`./saved_sessions`)) {
     fs.mkdirSync(`./saved_sessions`, { recursive: true });
@@ -79,7 +89,13 @@ const start = async () => {
       console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login");
       const { session } = req.body;
       // declare whatsapp-web-js instance
-      const client = new Client({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], session: sessionCfg });
+      const client = new Client({
+        headless: true, authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
+        qrTimeoutMs: 0,
+        // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+        args: browserArgs,
+        session: sessionCfg
+      });
       client.initialize();
       try {
         const result = await new Promise((resolve, reject) => {
@@ -202,7 +218,7 @@ const start = async () => {
       const foundAccount = await collection("Accounts").findOne({
         _id: activeSession._id,
       });
-      if(!foundAccount) {
+      if (!foundAccount) {
         return res.status(400).json({ message: "Token Invalid!" });
       }
       const listDevices = await collection("Devices")
