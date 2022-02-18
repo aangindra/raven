@@ -15,12 +15,12 @@ const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
 const browserArgs = [
-  '--disable-web-security', '--no-sandbox', '--disable-web-security',
+  '--disable-web-security', '--no-sandbox', '--disable-web-security', '--disable-gpu',
   '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
-  '--disable-offline-load-stale-cache', '--disk-cache-size=0',
+  '--disable-offline-load-stale-cache', '--disk-cache-size=0', '--disable-software-rasterizer',
   '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
   '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
-  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update',
+  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
   '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
 ];
 
@@ -38,6 +38,7 @@ const start = async () => {
     puppeteer: {
       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
       qrTimeoutMs: 0,
+      headless: true,
       args: browserArgs
     },
     session: sessionCfg
