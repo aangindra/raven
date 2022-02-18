@@ -35,7 +35,11 @@ const start = async () => {
   const { cache } = await initRedis();
 
   const client = new Client({
-    puppeteer: { args: browserArgs },
+    puppeteer: {
+      authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
+      qrTimeoutMs: 0,
+      args: browserArgs
+    },
     session: sessionCfg
   });
 
@@ -61,9 +65,9 @@ const start = async () => {
       var cacheResult = await cache.getAsync(cacheKey);
       let foundAutoReply = "";
 
-      if(cacheResult !== null){
+      if (cacheResult !== null) {
         foundAutoReply = JSON.parse(cacheResult);
-      }else{
+      } else {
         foundAutoReply = await collection("WhatsappAutoReplies").findOne({
           sender: WA_SESSION,
         });
@@ -86,7 +90,7 @@ const start = async () => {
         _createdAt: new Date().toISOString(),
         _updatedAt: new Date().toISOString(),
       });
-    }else{
+    } else {
       collection("MessagesLogs").insertOne({
         _id: uuidV4(),
         sender: WA_SESSION,
