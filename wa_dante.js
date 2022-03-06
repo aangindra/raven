@@ -171,9 +171,9 @@ const sendMessage = async (client, cache, collection) => {
         phone: {
           $ne: "",
         },
-        // phone: {
-        //   $nin: listSenders,
-        // },
+        phone: {
+          $nin: listSenders,
+        },
       },
     ],
     $or: [
@@ -402,9 +402,9 @@ const sendMessageSchedule = async (client, cache, collection) => {
           phone: {
             $ne: "",
           },
-          // phone: {
-          //   $nin: listSenders,
-          // },
+          phone: {
+            $nin: listSenders,
+          },
         },
       ],
       $or: [
