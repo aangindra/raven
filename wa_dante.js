@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, LegacySessionAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LegacySessionAuth, NoAuth, MessageMedia } = require('whatsapp-web.js');
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
 const fs = require("fs");
@@ -33,7 +33,16 @@ const start = async () => {
 
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
-
+  let authOptions = {
+    authStrategy: new LegacySessionAuth({
+      session: sessionCfg
+    })
+  }
+  if (process.env.IS_MULTI_DEVICE === "true") {
+    authOptions = {
+      authStrategy: new NoAuth(),
+    }
+  }
   const client = new Client({
     puppeteer: {
       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
@@ -42,9 +51,7 @@ const start = async () => {
       args: browserArgs
     },
     // session: sessionCfg,
-    authStrategy: new LegacySessionAuth({
-      session: sessionCfg
-    })
+    ...authOptions,
   });
 
   client.initialize();
