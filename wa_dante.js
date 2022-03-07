@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, MessageMedia } = require('whatsapp-web.js');
+const { Client, LegacySessionAuth, MessageMedia } = require('whatsapp-web.js');
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
 const fs = require("fs");
@@ -41,7 +41,10 @@ const start = async () => {
       headless: true,
       args: browserArgs
     },
-    session: sessionCfg
+    // session: sessionCfg,
+    authStrategy: new LegacySessionAuth({
+      session: sessionCfg
+    })
   });
 
   client.initialize();
