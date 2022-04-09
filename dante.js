@@ -8,12 +8,16 @@ const { verifyToken, authenticate } = require("./auth/verifyToken");
 const dayjs = require("dayjs");
 const fs = require("fs");
 const uuidV4 = require("uuid/v4");
-const { Client } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const shell = require("shelljs");
 const mongodbConnection = require("./mongodb_connection");
 const Pusher = require("pusher");
+const socketIo = require('socket.io');
+const http = require('http');
+
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
+const path = require("path");
 const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
   ? process.env.SENDER_LOAD_BALANCE
   : "";
@@ -33,6 +37,7 @@ const browserArgs = [
   '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
   '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
 ];
+
 
 const start = async () => {
   if (!fs.existsSync(`./saved_sessions`)) {
@@ -68,6 +73,29 @@ const start = async () => {
     })
   );
 
+  const serverSocketIO = http.createServer(app)
+
+  const io = socketIo(serverSocketIO, {
+    transports: ["polling"],
+    cors: {
+      cors: {
+        origin: "http://localhost:6102",
+      },
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log(`A user is connected! ${socket.id}`);
+
+    socket.on("message", (message) => {
+      console.log(`message from ${socket.id} : ${message}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`socket ${socket.id} disconnected`);
+    });
+  });
+
   app.get("/", async (req, res) => {
     return res.status(200).json({ message: "Welcome to API Raven 1.0.0" });
   });
@@ -94,7 +122,7 @@ const start = async () => {
         qrTimeoutMs: 0,
         // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
         args: browserArgs,
-        session: sessionCfg
+        authStrategy: new LocalAuth()
       });
       client.initialize();
       try {
@@ -137,6 +165,65 @@ const start = async () => {
           message: "QR Code generated!",
           status: "notLogged",
           qrCode: result,
+        });
+      } catch (e) {
+        console.warn(e)
+      }
+
+    }
+  );
+
+  app.post(
+    "/login_whatsapp_multiple",
+    verifyToken,
+    [
+      bodyValidator("session")
+        .notEmpty()
+        .withMessage("session cannot be empty!"),
+    ],
+    async (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login_whatsapp_multiple");
+      const { session } = req.body;
+
+      const worker = `saved_sessions/session-${session}`;
+      if (!fs.existsSync(worker)) {
+        fs.mkdirSync(worker, { recursive: true });
+      } else {
+        fs.rmdirSync(worker, { recursive: true });
+        fs.mkdirSync(worker, { recursive: true });
+      }
+      // declare whatsapp-web-js instance
+      const client = new Client({
+        headless: true,
+        authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
+        qrTimeoutMs: 0,
+        // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+        args: browserArgs,
+        authStrategy: new LocalAuth({
+          dataPath: path.join(__dirname, `saved_sessions/session-${session}`),
+        }),
+      });
+      client.initialize();
+      try {
+        client.on("qr", (qr) => {
+          io.emit("QR_CODE", JSON.stringify({ qrCode: qr }));
+        });
+        client.on("ready", () => {
+          console.log("is logged multi-device");
+        });
+        client.on("authenticated", async (token) => {
+          console.log("authenticated multi-device", token)
+        });
+
+        return res.status(200).json({
+          message: "QR Code generated!",
+          status: "notLogged",
+          qrCode: "-",
         });
       } catch (e) {
         console.warn(e)
@@ -289,6 +376,11 @@ const start = async () => {
     console.log(`WhatsApp API server running on port ${PORT}.`);
   });
   serverAfterListening.setTimeout(600000);
+  serverSocketIO.listen(process.env.SOCKET_PORT || 1000, () => {
+    console.log(
+      `Started websocket server at http://0.0.0.0:${process.env.SOCKET_PORT}!`
+    );
+  });
 };
 
 const generatedLoadBalanceMessage = (message) => {
