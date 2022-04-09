@@ -47,7 +47,7 @@ const start = async () => {
     puppeteer: {
       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
       qrTimeoutMs: 0,
-      headless: false,
+      headless: true,
       args: browserArgs
     },
     takeoverOnConflict: true,
