@@ -11,16 +11,26 @@ const uuidV4 = require("uuid/v4");
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const shell = require("shelljs");
 const mongodbConnection = require("./mongodb_connection");
+const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
 const socketIo = require('socket.io');
 const http = require('http');
-
+const {
+  createSession,
+  formatPhone,
+  getSession,
+  deleteSession,
+  sendMessage,
+  isExists,
+} = require('./baileys')
+const utils = require("./libs/utils");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
 const path = require("path");
 const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
   ? process.env.SENDER_LOAD_BALANCE
   : "";
+const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 
 const SESSION_FILE_PATH = './sessions/session.json';
 let sessionCfg;
@@ -51,6 +61,8 @@ const start = async () => {
     useTLS: true,
   });
   const collection = await mongodbConnection("WA");
+  const { cache } = await initRedis();
+
   let app = express();
   const corsOptions = {
     optionsSuccessStatus: 200,
@@ -197,28 +209,9 @@ const start = async () => {
         fs.rmdirSync(worker, { recursive: true });
         fs.mkdirSync(worker, { recursive: true });
       }
-      // declare whatsapp-web-js instance
-      const client = new Client({
-        headless: true,
-        authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
-        qrTimeoutMs: 0,
-        // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
-        args: browserArgs,
-        authStrategy: new LocalAuth({
-          dataPath: path.join(__dirname, `saved_sessions/session-${session}`),
-        }),
-      });
-      client.initialize();
+
       try {
-        client.on("qr", (qr) => {
-          io.emit("QR_CODE", JSON.stringify({ qrCode: qr }));
-        });
-        client.on("ready", () => {
-          console.log("is logged multi-device");
-        });
-        client.on("authenticated", async (token) => {
-          console.log("authenticated multi-device", token)
-        });
+        await createSession({ sessionId: session, isLegacy: false, collection, socket: io, cache });
 
         return res.status(200).json({
           message: "QR Code generated!",
@@ -231,6 +224,123 @@ const start = async () => {
 
     }
   );
+
+  app.post('/send_message_baileys',
+    [
+      bodyValidator("session")
+        .notEmpty()
+        .withMessage("session cannot be empty!"),
+    ],
+    async (req, res) => {
+      const { session, phone, messageType, payload } = req.body;
+      const phoneFormat = utils.formatPhone(phone, 'ID')
+      const mobileNumber = utils.formatPhone(session);
+      const foundSession = await getSession(mobileNumber, cache);
+      const receiverPhone = formatPhone(phoneFormat);
+      if (foundSession) {
+        const exists = await isExists(foundSession, receiverPhone)
+
+        if (!exists) {
+          if (messageType === "SCHEDULED") {
+            await collection("ScheduleMessages").updateOne({
+              _id: payload._id,
+            }, {
+              $set: {
+                errorAt: new Date().toISOString(),
+                errorMessage: "Invalid phone number!"
+              }
+            })
+          } else {
+            await collection("Messages").updateOne({
+              _id: payload._id,
+            }, {
+              $set: {
+                errorAt: new Date().toISOString(),
+                errorMessage: "Invalid phone number!"
+              }
+            })
+          };
+
+          console.log("Invalid phone number!")
+
+          return res.status(404).json({
+            status: false,
+            message: "Number not valid!",
+          })
+        }
+        await sendMessage(foundSession, receiverPhone, { text: payload.message });
+      } else {
+        console.log("Whatsapp not connected!");
+        return res.status(200).json({
+          status: false,
+          message: `Whatsapp not connected!`
+        })
+      }
+      return res.status(200).json({
+        status: true,
+        message: `Successfully sent message to ${receiverPhone}`
+      })
+    });
+
+  // app.post(
+  //   "/login_whatsapp_multiple",
+  //   verifyToken,
+  //   [
+  //     bodyValidator("session")
+  //       .notEmpty()
+  //       .withMessage("session cannot be empty!"),
+  //   ],
+  //   async (req, res) => {
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) {
+  //       return res.status(400).json({ errors: errors.array() });
+  //     }
+
+  //     console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login_whatsapp_multiple");
+  //     const { session } = req.body;
+
+  //     const worker = `saved_sessions/session-${session}`;
+  //     if (!fs.existsSync(worker)) {
+  //       fs.mkdirSync(worker, { recursive: true });
+  //     } else {
+  //       fs.rmdirSync(worker, { recursive: true });
+  //       fs.mkdirSync(worker, { recursive: true });
+  //     }
+  //     // declare whatsapp-web-js instance
+  //     const client = new Client({
+  //       headless: true,
+  //       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
+  //       qrTimeoutMs: 0,
+  //       // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+  //       args: browserArgs,
+  //       executablePath: path.join(__dirname, "node_modules/puppeteer/.local-chromium/linux-970485/chrome-linux/chrome"),
+  //       authStrategy: new LocalAuth({
+  //         dataPath: path.join(__dirname, `saved_sessions/session-${session}`),
+  //       }),
+  //     });
+  //     client.initialize();
+  //     try {
+  //       client.on("qr", (qr) => {
+  //         io.emit("QR_CODE", JSON.stringify({ qrCode: qr }));
+  //       });
+  //       client.on("ready", () => {
+  //         console.log("is logged multi-device");
+  //       });
+  //       client.on("authenticated", async (token) => {
+  //         console.log("authenticated multi-device", token)
+  //       });
+
+  //       return res.status(200).json({
+  //         message: "QR Code generated!",
+  //         status: "notLogged",
+  //         qrCode: "-",
+  //       });
+  //     } catch (e) {
+  //       console.warn(e)
+  //     }
+
+  //   }
+  // );
 
   app.post(
     "/disconnect",
@@ -257,6 +367,7 @@ const start = async () => {
             },
           }
         );
+        await deleteSession({ session, collection })
       } catch (e) {
         console.log(e);
       }
