@@ -196,7 +196,7 @@ const sendMessage = async ({ collection, cache }) => {
         },
       }
     );
-    console.log(e);
+    // console.log(e);
   }
   return true;
 };
