@@ -268,13 +268,21 @@ const start = async () => {
             message: "Number not valid!",
           })
         }
-        await sendMessage(foundSession, receiverPhone, { text: payload.message });
+        if (payload.type === "FILE") {
+          await sendMessage(foundSession, receiverPhone, { text: payload.message });
+          sendMessage(foundSession, receiverPhone, { document: { url: payload.file }, mimetype: "application/pdf", fileName: uuidV4() });
+        } else if (payload.type === "IMAGE") {
+          await sendMessage(foundSession, receiverPhone, { text: payload.message });
+          sendMessage(foundSession, receiverPhone, { image: { url: payload.image }, fileName: uuidV4() });
+        } else {
+          await sendMessage(foundSession, receiverPhone, { text: payload.message });
+        }
       } else {
         console.log("Whatsapp not connected!");
         return res.status(200).json({
           status: false,
           message: `Whatsapp not connected!`
-        })
+        });
       }
       return res.status(200).json({
         status: true,

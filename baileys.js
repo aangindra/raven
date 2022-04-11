@@ -81,7 +81,7 @@ const createSession = async ({ sessionId, isLegacy = false, collection = null, c
 
   sessions.set(sessionId, { ...wa, store, isLegacy });
   if (cache) {
-    await cache.hset("baileys-sessions", sessionId, JSON.stringify({ ...wa, store, isLegacy }))
+    // await cache.hmset(`baileys-sessions-${sessionId}`, JSON.stringify({ ...wa, store, isLegacy }));
   }
   wa.ev.on('creds.update', saveState)
 
