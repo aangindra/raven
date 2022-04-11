@@ -152,7 +152,7 @@ const sendMessage = async ({ collection, cache }) => {
       console.log(
         dayjs().format("YYYY-MM-DD HH:mm:ss"),
         " ",
-        `found message for ${foundMessage.phone}!`
+        `found message for ${foundMessage.phone} ${foundMessage.message}!`
       );
     }
   }
@@ -290,7 +290,7 @@ const sendMessageSchedule = async ({ collection, cache }) => {
     console.log(
       dayjs().format("YYYY-MM-DD HH:mm:ss"),
       " ",
-      `found message for ${foundMessage.phone}!`
+      `found schedule message for ${foundMessage.phone} ${foundMessage.message}!`
     );
   }
   try {
@@ -310,7 +310,7 @@ const sendMessageSchedule = async ({ collection, cache }) => {
     );
 
     if (response.data.status === true) {
-      await collection("Messages").updateOne({
+      await collection("ScheduleMessages").updateOne({
         _id: foundMessage._id
       }, {
         $set: {
