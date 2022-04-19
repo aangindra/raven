@@ -22,6 +22,7 @@ const {
   deleteSession,
   sendMessage,
   isExists,
+  buildSession,
 } = require('./baileys')
 const utils = require("./libs/utils");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
@@ -497,6 +498,7 @@ const start = async () => {
   });
   serverAfterListening.setTimeout(600000);
   serverSocketIO.listen(process.env.SOCKET_PORT || 1000, () => {
+    buildSession(io)
     console.log(
       `Started websocket server at http://0.0.0.0:${process.env.SOCKET_PORT}!`
     );

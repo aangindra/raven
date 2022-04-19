@@ -256,29 +256,29 @@ const formatGroup = (group) => {
   return (formatted += '@g.us')
 }
 
-const init = (socket) => {
+const buildSession = (socket) => {
   readdir(sessionsDir(), (err, files) => {
     if (err) {
-      throw err
+      throw err;
     }
 
     for (const file of files) {
       if (
-        !file.endsWith('.json') ||
-        (!file.startsWith('md_') && !file.startsWith('legacy_')) ||
-        file.includes('_store')
+        !file.endsWith(".json") ||
+        (!file.startsWith("md_") && !file.startsWith("legacy_")) ||
+        file.includes("_store")
       ) {
-        continue
+        continue;
       }
 
-      const filename = file.replace('.json', '')
-      const isLegacy = filename.split('_', 1)[0] !== 'md'
-      const sessionId = filename.substring(isLegacy ? 7 : 3)
+      const filename = file.replace(".json", "");
+      const isLegacy = filename.split("_", 1)[0] !== "md";
+      const sessionId = filename.substring(isLegacy ? 7 : 3);
 
-      createSession({ sessionId, isLegacy, socket })
+      createSession({ sessionId, isLegacy, socket });
     }
-  })
-}
+  });
+};
 
 module.exports = {
   isSessionExists,
@@ -290,5 +290,5 @@ module.exports = {
   sendMessage,
   formatPhone,
   formatGroup,
-  init,
+  buildSession,
 }
