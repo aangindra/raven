@@ -100,10 +100,12 @@ const sendMessage = async ({ collection, cache }) => {
         sentAt: {
           $exists: false,
         },
+      },
+      {
         errorAt: {
           $exists: false,
         },
-      },
+      }
     ],
     _deletedAt: {
       $exists: false,
