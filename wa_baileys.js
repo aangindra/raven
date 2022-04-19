@@ -217,7 +217,7 @@ const sendMessageSchedule = async ({ collection, cache }) => {
     useTLS: true,
   });
 
-  await collection("Messages").createIndex({
+  await collection("ScheduleMessages").createIndex({
     sender: 1,
     phone: 1,
     sentAt: 1,
