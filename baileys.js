@@ -256,7 +256,7 @@ const formatGroup = (group) => {
   return (formatted += '@g.us')
 }
 
-const buildSession = (socket) => {
+const buildSession = ({ socket, collection }) => {
   readdir(sessionsDir(), (err, files) => {
     if (err) {
       throw err;
@@ -275,7 +275,7 @@ const buildSession = (socket) => {
       const isLegacy = filename.split("_", 1)[0] !== "md";
       const sessionId = filename.substring(isLegacy ? 7 : 3);
 
-      createSession({ sessionId, isLegacy, socket });
+      createSession({ sessionId, collection, isLegacy, socket });
     }
   });
 };
