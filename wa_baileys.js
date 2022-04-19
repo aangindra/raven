@@ -94,8 +94,6 @@ const sendMessage = async ({ collection, cache }) => {
           $nin: listSenders,
         },
       },
-    ],
-    $or: [
       {
         sentAt: {
           $exists: false,
@@ -182,6 +180,9 @@ const sendMessage = async ({ collection, cache }) => {
         sentAt: new Date().toISOString(),
       }
     })
+    stringResult = JSON.stringify(foundMessage);
+    await cache.set(cacheKey, stringResult);
+
     // }
     // pusher.trigger("whatsapp-gateway", "message", calculate);
 
@@ -243,8 +244,6 @@ const sendMessageSchedule = async ({ collection, cache }) => {
             $nin: listSenders,
           },
         },
-      ],
-      $or: [
         {
           sentAt: {
             $exists: false,
@@ -319,6 +318,8 @@ const sendMessageSchedule = async ({ collection, cache }) => {
         sentAt: new Date().toISOString(),
       }
     })
+    stringResult = JSON.stringify(foundMessage);
+    await cache.set(cacheKey, stringResult);
     // }
 
   } catch (e) {
