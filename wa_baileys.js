@@ -172,15 +172,15 @@ const sendMessage = async ({ collection, cache }) => {
       }
     );
 
-    if (response.data.status === true) {
-      await collection("Messages").updateOne({
-        _id: foundMessage._id
-      }, {
-        $set: {
-          sentAt: new Date().toISOString(),
-        }
-      })
-    }
+    // if (response.data.status === true) {
+    await collection("Messages").updateOne({
+      _id: foundMessage._id
+    }, {
+      $set: {
+        sentAt: new Date().toISOString(),
+      }
+    })
+    // }
     // pusher.trigger("whatsapp-gateway", "message", calculate);
 
   } catch (e) {
@@ -309,15 +309,15 @@ const sendMessageSchedule = async ({ collection, cache }) => {
       }
     );
 
-    if (response.data.status === true) {
-      await collection("ScheduleMessages").updateOne({
-        _id: foundMessage._id
-      }, {
-        $set: {
-          sentAt: new Date().toISOString(),
-        }
-      })
-    }
+    // if (response.data.status === true) {
+    await collection("ScheduleMessages").updateOne({
+      _id: foundMessage._id
+    }, {
+      $set: {
+        sentAt: new Date().toISOString(),
+      }
+    })
+    // }
 
   } catch (e) {
     await collection("ScheduleMessages").updateOne(
