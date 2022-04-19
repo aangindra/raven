@@ -498,7 +498,7 @@ const start = async () => {
   });
   serverAfterListening.setTimeout(600000);
   serverSocketIO.listen(process.env.SOCKET_PORT || 1000, () => {
-    buildSession(io)
+    buildSession({ socket: io, collection })
     console.log(
       `Started websocket server at http://0.0.0.0:${process.env.SOCKET_PORT}!`
     );
