@@ -157,7 +157,7 @@ const sendMessage = async ({ collection, cache }) => {
     }
   }
   try {
-    const response = await axios.post(
+    axios.post(
       `${RAVEN_API_HOST}/send_message_baileys`,
       {
         session: WA_SESSION,
@@ -294,7 +294,7 @@ const sendMessageSchedule = async ({ collection, cache }) => {
     );
   }
   try {
-    const response = await axios.post(
+    axios.post(
       `${RAVEN_API_HOST}/send_message_baileys`,
       {
         session: WA_SESSION,
