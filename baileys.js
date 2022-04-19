@@ -117,14 +117,14 @@ const createSession = async ({ sessionId, isLegacy = false, collection = null, c
       const update = {
         status: 'Connected'
       }
-      await collection("Devices").updateOne({
-        phone: sessionId
-      }, {
-        $set: {
-          status: "CONNECTED",
-          _updatedAt: new Date().toISOString(),
-        }
-      })
+      // await collection("Devices").updateOne({
+      //   phone: sessionId
+      // }, {
+      //   $set: {
+      //     status: "CONNECTED",
+      //     _updatedAt: new Date().toISOString(),
+      //   }
+      // })
     }
 
     if (connection === 'close') {
