@@ -62,6 +62,10 @@ const sendMessage = async ({ collection, cache }) => {
   });
   await collection("Messages").createIndex({
     sender: 1,
+    phone: 1,
+    sentAt: 1,
+    errorAt: 1,
+    _createdAt: -1
   });
 
   var cacheKeySenderLists = `WA_sender_lists`;
@@ -211,6 +215,15 @@ const sendMessageSchedule = async ({ collection, cache }) => {
     secret: PUSHER_APP_SECRET,
     cluster: "ap1",
     useTLS: true,
+  });
+
+  await collection("Messages").createIndex({
+    sender: 1,
+    phone: 1,
+    sentAt: 1,
+    errorAt: 1,
+    scheduleDate: 1,
+    _createdAt: -1
   });
 
   var cacheKeySenderLists = `WA_sender_lists`;
