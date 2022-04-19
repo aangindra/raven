@@ -149,6 +149,7 @@ const start = async () => {
             resolve("isLogged");
           });
           client.on("authenticated", async (token) => {
+            console.log(token)
             fs.writeFileSync(`${__dirname + '/saved_sessions/' + session}.data.json`, JSON.stringify(token));
             await collection("Devices").updateOne(
               {
