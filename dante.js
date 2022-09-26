@@ -8,13 +8,14 @@ const { verifyToken, authenticate } = require("./auth/verifyToken");
 const dayjs = require("dayjs");
 const fs = require("fs");
 const uuidV4 = require("uuid/v4");
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth } = require("whatsapp-web.js");
 const shell = require("shelljs");
+const { sample } = require("lodash");
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
-const socketIo = require('socket.io');
-const http = require('http');
+const socketIo = require("socket.io");
+const http = require("http");
 const {
   createSession,
   formatPhone,
@@ -23,7 +24,7 @@ const {
   sendMessage,
   isExists,
   buildSession,
-} = require('./baileys')
+} = require("./baileys");
 const utils = require("./libs/utils");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
@@ -33,22 +34,38 @@ const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
   : "";
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 
-const SESSION_FILE_PATH = './sessions/session.json';
+const SESSION_FILE_PATH = "./sessions/session.json";
 let sessionCfg;
 if (fs.existsSync(SESSION_FILE_PATH)) {
   sessionCfg = require(SESSION_FILE_PATH);
 }
 
 const browserArgs = [
-  '--disable-web-security', '--no-sandbox', '--disable-web-security', '--disable-gpu',
-  '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
-  '--disable-offline-load-stale-cache', '--disk-cache-size=0', '--disable-software-rasterizer',
-  '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
-  '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
-  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
-  '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
+  "--disable-web-security",
+  "--no-sandbox",
+  "--disable-web-security",
+  "--disable-gpu",
+  "--aggressive-cache-discard",
+  "--disable-cache",
+  "--disable-application-cache",
+  "--disable-offline-load-stale-cache",
+  "--disk-cache-size=0",
+  "--disable-software-rasterizer",
+  "--disable-background-networking",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-sync",
+  "--disable-translate",
+  "--hide-scrollbars",
+  "--metrics-recording-only",
+  "--mute-audio",
+  "--no-first-run",
+  "--safebrowsing-disable-auto-update",
+  "--disable-dev-shm-usage",
+  "--ignore-certificate-errors",
+  "--ignore-ssl-errors",
+  "--ignore-certificate-errors-spki-list",
 ];
-
 
 const start = async () => {
   if (!fs.existsSync(`./saved_sessions`)) {
@@ -86,7 +103,7 @@ const start = async () => {
     })
   );
 
-  const serverSocketIO = http.createServer(app)
+  const serverSocketIO = http.createServer(app);
 
   const io = socketIo(serverSocketIO, {
     transports: ["polling"],
@@ -131,11 +148,12 @@ const start = async () => {
       const { session } = req.body;
       // declare whatsapp-web-js instance
       const client = new Client({
-        headless: true, authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
+        headless: true,
+        authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
         qrTimeoutMs: 0,
-        // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+        // args: ['--no-sandbox', '--disable-setuid-sandbox'],
         args: browserArgs,
-        authStrategy: new LocalAuth()
+        authStrategy: new LocalAuth(),
       });
       client.initialize();
       try {
@@ -150,8 +168,11 @@ const start = async () => {
             resolve("isLogged");
           });
           client.on("authenticated", async (token) => {
-            console.log(token)
-            fs.writeFileSync(`${__dirname + '/saved_sessions/' + session}.data.json`, JSON.stringify(token));
+            console.log(token);
+            fs.writeFileSync(
+              `${__dirname + "/saved_sessions/" + session}.data.json`,
+              JSON.stringify(token)
+            );
             await collection("Devices").updateOne(
               {
                 phone: session,
@@ -165,8 +186,8 @@ const start = async () => {
 
             shell.exec(`pm2 reload wa-${session}`);
 
-            resolve("isAuthenticated")
-          })
+            resolve("isAuthenticated");
+          });
         });
 
         // if (result === "isLogged" || result === "isAuthenticated") {
@@ -181,9 +202,8 @@ const start = async () => {
           qrCode: result,
         });
       } catch (e) {
-        console.warn(e)
+        console.warn(e);
       }
-
     }
   );
 
@@ -201,7 +221,11 @@ const start = async () => {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login_whatsapp_multiple");
+      console.log(
+        dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        " ",
+        "POST /login_whatsapp_multiple"
+      );
       const { session } = req.body;
 
       const worker = `saved_sessions/session-${session}`;
@@ -213,7 +237,13 @@ const start = async () => {
       }
 
       try {
-        await createSession({ sessionId: session, isLegacy: false, collection, socket: io, cache });
+        await createSession({
+          sessionId: session,
+          isLegacy: false,
+          collection,
+          socket: io,
+          cache,
+        });
 
         return res.status(200).json({
           message: "QR Code generated!",
@@ -221,13 +251,13 @@ const start = async () => {
           qrCode: "-",
         });
       } catch (e) {
-        console.warn(e)
+        console.warn(e);
       }
-
     }
   );
 
-  app.post('/send_message_baileys',
+  app.post(
+    "/send_message_baileys",
     [
       bodyValidator("session")
         .notEmpty()
@@ -235,62 +265,82 @@ const start = async () => {
     ],
     async (req, res) => {
       const { session, phone, messageType, payload } = req.body;
-      const phoneFormat = utils.formatPhone(phone, 'ID')
+      const phoneFormat = utils.formatPhone(phone, "ID");
       const mobileNumber = utils.formatPhone(session);
       const foundSession = await getSession(mobileNumber, cache);
       const receiverPhone = formatPhone(phoneFormat);
       if (foundSession) {
-        const exists = await isExists(foundSession, receiverPhone)
+        const exists = await isExists(foundSession, receiverPhone);
 
         if (!exists) {
           if (messageType === "SCHEDULED") {
-            await collection("ScheduleMessages").updateOne({
-              _id: payload._id,
-            }, {
-              $set: {
-                errorAt: new Date().toISOString(),
-                errorMessage: "Invalid phone number!"
+            await collection("ScheduleMessages").updateOne(
+              {
+                _id: payload._id,
+              },
+              {
+                $set: {
+                  errorAt: new Date().toISOString(),
+                  errorMessage: "Invalid phone number!",
+                },
               }
-            })
+            );
           } else {
-            await collection("Messages").updateOne({
-              _id: payload._id,
-            }, {
-              $set: {
-                errorAt: new Date().toISOString(),
-                errorMessage: "Invalid phone number!"
+            await collection("Messages").updateOne(
+              {
+                _id: payload._id,
+              },
+              {
+                $set: {
+                  errorAt: new Date().toISOString(),
+                  errorMessage: "Invalid phone number!",
+                },
               }
-            })
-          };
+            );
+          }
 
-          console.log("Invalid phone number!")
+          console.log("Invalid phone number!");
 
           return res.status(404).json({
             status: false,
             message: "Number not valid!",
-          })
+          });
         }
         if (payload.type === "FILE") {
-          await sendMessage(foundSession, receiverPhone, { text: payload.message });
-          sendMessage(foundSession, receiverPhone, { document: { url: payload.file }, mimetype: "application/pdf", fileName: uuidV4() });
+          await sendMessage(foundSession, receiverPhone, {
+            text: payload.message,
+          });
+          sendMessage(foundSession, receiverPhone, {
+            document: { url: payload.file },
+            mimetype: "application/pdf",
+            fileName: uuidV4(),
+          });
         } else if (payload.type === "IMAGE") {
-          await sendMessage(foundSession, receiverPhone, { text: payload.message });
-          sendMessage(foundSession, receiverPhone, { image: { url: payload.image }, fileName: uuidV4() });
+          await sendMessage(foundSession, receiverPhone, {
+            text: payload.message,
+          });
+          sendMessage(foundSession, receiverPhone, {
+            image: { url: payload.image },
+            fileName: uuidV4(),
+          });
         } else {
-          await sendMessage(foundSession, receiverPhone, { text: payload.message });
+          await sendMessage(foundSession, receiverPhone, {
+            text: payload.message,
+          });
         }
       } else {
         console.log("Whatsapp not connected!");
         return res.status(200).json({
           status: false,
-          message: `Whatsapp not connected!`
+          message: `Whatsapp not connected!`,
         });
       }
       return res.status(200).json({
         status: true,
-        message: `Successfully sent message to ${receiverPhone}`
-      })
-    });
+        message: `Successfully sent message to ${receiverPhone}`,
+      });
+    }
+  );
 
   // app.post(
   //   "/login_whatsapp_multiple",
@@ -321,7 +371,7 @@ const start = async () => {
   //       headless: true,
   //       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
   //       qrTimeoutMs: 0,
-  //       // args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+  //       // args: ['--no-sandbox', '--disable-setuid-sandbox'],
   //       args: browserArgs,
   //       executablePath: path.join(__dirname, "node_modules/puppeteer/.local-chromium/linux-970485/chrome-linux/chrome"),
   //       authStrategy: new LocalAuth({
@@ -377,11 +427,13 @@ const start = async () => {
             },
           }
         );
-        await deleteSession({ session, collection })
+        await deleteSession({ session, collection });
       } catch (e) {
         console.log(e);
       }
-      return res.status(200).json({ message: "Disconnect successfully!", status: "notLogged" });
+      return res
+        .status(200)
+        .json({ message: "Disconnect successfully!", status: "notLogged" });
     }
   );
 
@@ -431,17 +483,18 @@ const start = async () => {
       }
       const listDevices = await collection("Devices")
         .find({
-          $or: [{
-            accountIds: {
-              $in: [foundAccount._id],
+          $or: [
+            {
+              accountIds: {
+                $in: [foundAccount._id],
+              },
             },
-          }, {
-            accountId: foundAccount.username
-          }
+            {
+              accountId: foundAccount.username,
+            },
           ],
         })
         .toArray();
-
       const devices = listDevices.map((device) => device.phone);
       if (!devices.includes(sender)) {
         if (sender !== "6283143574597") {
@@ -453,8 +506,6 @@ const start = async () => {
           .status(400)
           .json({ errors: { message: "Wrong type message!" } });
       }
-
-      console.log(sender);
 
       let newMessage = {
         _id: uuidV4(),
@@ -478,8 +529,11 @@ const start = async () => {
       const phones = phone.split(",");
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
-        newMessage = generatedLoadBalanceMessage(newMessage);
-        await collection("Messages").insertOne(newMessage);
+        newMessage = generatedLoadBalanceMessage({
+          message: newMessage,
+          devices: listDevices,
+        });
+        // await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", results);
@@ -498,30 +552,24 @@ const start = async () => {
   });
   serverAfterListening.setTimeout(600000);
   serverSocketIO.listen(process.env.SOCKET_PORT || 1000, () => {
-    buildSession({ socket: io, collection })
+    buildSession({ socket: io, collection });
     console.log(
       `Started websocket server at http://0.0.0.0:${process.env.SOCKET_PORT}!`
     );
   });
 };
 
-const generatedLoadBalanceMessage = (message) => {
+const generatedLoadBalanceMessage = ({ message, devices }) => {
   const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
-  const phone = parseInt(message.phone);
   let result = message;
-
+  const senderNumberException = devices
+    .filter((device) => !device.isLoadBalancer)
+    .map((dev) => dev.phone);
   if (
     loadBalancedSender.length > 1 &&
-    !["6283179715536", "628973787777"].includes(result.sender)
-    && loadBalancedSender.includes(result.sender)
+    !senderNumberException.includes(result.sender)
   ) {
-    if (phone % 2 === 0) {
-      result.sender = loadBalancedSender[0];
-      console.log("hit even!");
-    } else {
-      result.sender = loadBalancedSender[1];
-      console.log("hit odd!");
-    }
+    result.sender = sample(loadBalancedSender);
   }
   return result;
 };
