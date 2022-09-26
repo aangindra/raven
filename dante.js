@@ -533,7 +533,7 @@ const start = async () => {
           message: newMessage,
           devices: listDevices,
         });
-        // await collection("Messages").insertOne(newMessage);
+        await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
       pusher.trigger("whatsapp-gateway", "message", results);
