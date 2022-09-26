@@ -88,42 +88,47 @@ const start = async () => {
           // createFileToken: true,
         };
         const client = await new Promise((resolve, reject) => {
-          venom.create(
-            session,
-            (base64Qr, asciiQR) => {
-              if (!existsSync(`./log_qr`)) {
-                mkdirSync(`./log_qr`, { recursive: true });
-              }
-              exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
-              resolve(base64Qr);
-            },
-            async (statusSession) => {
-              if (statusSession === "isLogged") {
-                resolve(statusSession);
-              } else if (statusSession === "qrReadSuccess") {
-                await collection("Devices").updateOne(
-                  {
-                    phone: session,
-                  },
-                  {
-                    $set: {
-                      status: "CONNECTED",
+          venom
+            .create(
+              session,
+              (base64Qr, asciiQR) => {
+                if (!existsSync(`./log_qr`)) {
+                  mkdirSync(`./log_qr`, { recursive: true });
+                }
+                exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
+                resolve(base64Qr);
+              },
+              async (statusSession) => {
+                if (statusSession === "isLogged") {
+                  resolve(statusSession);
+                } else if (statusSession === "qrReadSuccess") {
+                  await collection("Devices").updateOne(
+                    {
+                      phone: session,
                     },
-                  }
-                );
-                shell.exec(`pm2 reload wa-${session}`);
-                resolve(statusSession);
+                    {
+                      $set: {
+                        status: "CONNECTED",
+                      },
+                    }
+                  );
+                  shell.exec(`pm2 reload wa-${session}`);
+                  resolve(statusSession);
+                }
+              },
+              venomOptions,
+              (browser, waPage) => {
+                console.log("Browser PID:", browser.process().pid);
+                waPage.screenshot({ path: "screenshot.png" });
               }
-            },
-            venomOptions,
-            (browser, waPage) => {
-              console.log('Browser PID:', browser.process().pid);
-              waPage.screenshot({ path: 'screenshot.png' });
-            }
-          ).then(async callback => {
-            const token = await callback.getSessionTokenBrowser();
-            fs.writeFileSync(`${__dirname + '/saved_tokens/' + session}.data.json`, JSON.stringify(token));
-          });
+            )
+            .then(async (callback) => {
+              const token = await callback.getSessionTokenBrowser();
+              fs.writeFileSync(
+                `${__dirname + "/saved_tokens/" + session}.data.json`,
+                JSON.stringify(token)
+              );
+            });
         });
         if (client === "isLogged") {
           await collection("Devices").updateOne(
@@ -280,13 +285,13 @@ const start = async () => {
         return res.status(400).json({ errors: errors.array() });
       }
       var ip;
-      if (req.headers['x-forwarded-for']) {
-        ip = req.headers['x-forwarded-for'].split(",")[0];
+      if (req.headers["x-forwarded-for"]) {
+        ip = req.headers["x-forwarded-for"].split(",")[0];
       } else if (req.connection && req.connection.remoteAddress) {
         ip = req.connection.remoteAddress;
       } else {
         ip = req.ip;
-      } 
+      }
 
       const { phone, message, type, image, file, sender, PREFIX } = req.body;
       const activeSession = await authenticate(req);
@@ -338,7 +343,10 @@ const start = async () => {
       const phones = phone.split(",");
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
-        newMessage = generatedLoadBalanceMessage(newMessage);
+        newMessage = generatedLoadBalanceMessage({
+          message: newMessage,
+          devices: listDevices,
+        });
         await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
@@ -390,23 +398,17 @@ const exportQR = (base64Qr, path) => {
   });
 };
 
-const generatedLoadBalanceMessage = (message) => {
+const generatedLoadBalanceMessage = ({ message, devices }) => {
   const loadBalancedSender = SENDER_LOAD_BALANCE.split(",");
-  // const seconds = dayjs(message._createdAt).unix();
-  const phone = parseInt(message.phone);
   let result = message;
-
+  const senderNumberException = devices
+    .filter((device) => !device.isLoadBalancer)
+    .map((dev) => dev.phone);
   if (
     loadBalancedSender.length > 1 &&
-    !["6283179715536", "628973787777"].includes(result.sender)
+    !senderNumberException.includes(result.sender)
   ) {
-    if (phone % 2 === 0) {
-      result.sender = loadBalancedSender[0];
-      console.log("hit even!");
-    } else {
-      result.sender = loadBalancedSender[1];
-      console.log("hit odd!");
-    }
+    result.sender = sample(loadBalancedSender);
   }
   return result;
 };
