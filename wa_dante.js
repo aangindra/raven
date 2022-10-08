@@ -1,11 +1,16 @@
 require("dotenv").config();
-const { Client, LegacySessionAuth, NoAuth, MessageMedia } = require('whatsapp-web.js');
+const {
+  Client,
+  LegacySessionAuth,
+  NoAuth,
+  MessageMedia,
+} = require("whatsapp-web.js");
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
 const fs = require("fs");
-const mime = require('mime');
-const fetch = require('node-fetch');
-const { URL } = require('url');
+const mime = require("mime");
+const fetch = require("node-fetch");
+const { URL } = require("url");
 const uuidV4 = require("uuid/v4");
 const { isEmpty } = require("lodash");
 const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
@@ -15,13 +20,30 @@ const Pusher = require("pusher");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const { calculateMessage } = require("./calculate_message");
 const browserArgs = [
-  '--disable-web-security', '--no-sandbox', '--disable-web-security', '--disable-gpu',
-  '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
-  '--disable-offline-load-stale-cache', '--disk-cache-size=0', '--disable-software-rasterizer',
-  '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
-  '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
-  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
-  '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
+  "--disable-web-security",
+  "--no-sandbox",
+  "--disable-web-security",
+  "--disable-gpu",
+  "--aggressive-cache-discard",
+  "--disable-cache",
+  "--disable-application-cache",
+  "--disable-offline-load-stale-cache",
+  "--disk-cache-size=0",
+  "--disable-software-rasterizer",
+  "--disable-background-networking",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-sync",
+  "--disable-translate",
+  "--hide-scrollbars",
+  "--metrics-recording-only",
+  "--mute-audio",
+  "--no-first-run",
+  "--safebrowsing-disable-auto-update",
+  "--disable-dev-shm-usage",
+  "--ignore-certificate-errors",
+  "--ignore-ssl-errors",
+  "--ignore-certificate-errors-spki-list",
 ];
 
 const start = async () => {
@@ -35,20 +57,20 @@ const start = async () => {
   const { cache } = await initRedis();
   let authOptions = {
     authStrategy: new LegacySessionAuth({
-      session: sessionCfg
-    })
-  }
+      session: sessionCfg,
+    }),
+  };
   if (process.env.IS_MULTI_DEVICE === "true") {
     authOptions = {
       authStrategy: new NoAuth(),
-    }
+    };
   }
   const client = new Client({
     puppeteer: {
       authTimeout: 0, // https://github.com/pedroslopez/whatsapp-web.js/issues/935#issuecomment-952867521
       qrTimeoutMs: 0,
       headless: true,
-      args: browserArgs
+      args: browserArgs,
     },
     // session: sessionCfg,
     ...authOptions,
@@ -56,8 +78,8 @@ const start = async () => {
 
   client.initialize();
 
-  client.on('authenticated', (session) => {
-    console.log('authenticated!')
+  client.on("authenticated", (session) => {
+    console.log("authenticated!");
     sessionData = session;
     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), (err) => {
       if (err) {
@@ -66,12 +88,16 @@ const start = async () => {
     });
   });
 
-
-
   client.on("message", async (msg) => {
-    const isFromGroup = msg.from.endsWith('@g.us');
+    const isFromGroup = msg.from.endsWith("@g.us");
     const fromNumber = msg.from.replace(/\D/g, "");
-    if (fromNumber && !isFromGroup && !msg.id.fromMe && !msg.hasMedia && msg.type === "chat") {
+    if (
+      fromNumber &&
+      !isFromGroup &&
+      !msg.id.fromMe &&
+      !msg.hasMedia &&
+      msg.type === "chat"
+    ) {
       var cacheKey = `whatsapp_auto_replies_${WA_SESSION}`;
       var cacheResult = await cache.getAsync(cacheKey);
       let foundAutoReply = "";
@@ -89,6 +115,7 @@ const start = async () => {
         _id: uuidV4(),
         sender: WA_SESSION,
         phone: fromNumber,
+        // notificationType: msg.notificationType,
         checkSendByGroupContacts: false,
         groupIds: [],
         fromMessage: msg.body,
@@ -121,14 +148,14 @@ const start = async () => {
     }
   });
 
-  let result
+  let result;
 
   result = await new Promise((resolve, reject) => {
     client.on("ready", () => {
       console.log("ready sending message...");
-      resolve(true)
+      resolve(true);
     });
-  })
+  });
 
   const isConnected = result;
   schedule.scheduleJob("*/10 * * * * *", async () => {
@@ -264,9 +291,7 @@ const sendMessage = async (client, cache, collection) => {
     }
   }
   try {
-    const validPhone = await client.getNumberId(
-      `${foundMessage.phone}@c.us`
-    );
+    const validPhone = await client.getNumberId(`${foundMessage.phone}@c.us`);
 
     if (isEmpty(validPhone)) {
       await collection("Messages").updateOne(
@@ -300,11 +325,17 @@ const sendMessage = async (client, cache, collection) => {
       result = true;
     } else if (foundMessage.type === "FILE" && foundMessage.file) {
       const document = await getDocumentFromUrl(foundMessage.file);
-      const media = new MessageMedia(document.mimetype, document.data, document.filename);
+      const media = new MessageMedia(
+        document.mimetype,
+        document.data,
+        document.filename
+      );
       // const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
-        client.sendMessage(`${foundMessage.phone}@c.us`, media, { caption: "document" });
+        client.sendMessage(`${foundMessage.phone}@c.us`, media, {
+          caption: "document",
+        });
         client.sendMessage(`${foundMessage.phone}@c.us`, foundMessage.message);
         result = true;
         var cacheKey = `WA_sender=${foundMessage.sender}_phone=${foundMessage.phone}_type=${foundMessage.type}`;
@@ -491,9 +522,7 @@ const sendMessageSchedule = async (client, cache, collection) => {
     );
   }
   try {
-    const validPhone = await client.getNumberId(
-      `${foundMessage.phone}@c.us`
-    );
+    const validPhone = await client.getNumberId(`${foundMessage.phone}@c.us`);
     if (isEmpty(validPhone)) {
       await collection("ScheduleMessages").updateOne(
         {
@@ -525,7 +554,11 @@ const sendMessageSchedule = async (client, cache, collection) => {
       result = true;
     } else if (foundMessage.type === "FILE") {
       const document = await getDocumentFromUrl(foundMessage.file);
-      const media = new MessageMedia(document.mimetype, document.data, document.filename);
+      const media = new MessageMedia(
+        document.mimetype,
+        document.data,
+        document.filename
+      );
       // const media = await MessageMedia.fromUrl(foundMessage.file);
 
       if (media) {
@@ -611,17 +644,19 @@ const getDocumentFromUrl = async (url, options = {}) => {
     const pUrl = new URL(url);
     mimetype = mime.getType(pUrl.pathname);
 
-    if (!mimetype)
-      throw new Error('Unable to determine MIME type');
+    if (!mimetype) throw new Error("Unable to determine MIME type");
   }
 
-  const reqOptions = Object.assign({ headers: { accept: 'image/* video/* text/* audio/*' } }, options);
+  const reqOptions = Object.assign(
+    { headers: { accept: "image/* video/* text/* audio/*" } },
+    options
+  );
   const response = await fetch(url, reqOptions);
-  const resultMime = response.headers.get('Content-Type');
-  let data = '';
+  const resultMime = response.headers.get("Content-Type");
+  let data = "";
 
   if (response.buffer) {
-    data = (await response.buffer()).toString('base64');
+    data = (await response.buffer()).toString("base64");
   } else {
     const bArray = new Uint8Array(await response.arrayBuffer());
     bArray.forEach((b) => {
@@ -630,14 +665,13 @@ const getDocumentFromUrl = async (url, options = {}) => {
     data = btoa(data);
   }
 
-  if (!mimetype)
-    mimetype = resultMime;
+  if (!mimetype) mimetype = resultMime;
   return {
     mimetype,
     data,
     filename: uuidV4(),
-  }
-}
+  };
+};
 
 const updateStatusDevice = async (phone, status, collection) => {
   await collection("Devices").updateOne(

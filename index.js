@@ -293,7 +293,16 @@ const start = async () => {
         ip = req.ip;
       }
 
-      const { phone, message, type, image, file, sender, PREFIX } = req.body;
+      const {
+        phone,
+        message,
+        type,
+        notificationType,
+        image,
+        file,
+        sender,
+        PREFIX,
+      } = req.body;
       const activeSession = await authenticate(req);
       if (!activeSession) {
         return res.status(403).json({ message: "Token invalid!" });
@@ -326,6 +335,7 @@ const start = async () => {
         phone: "",
         message,
         type,
+        notificationType,
         isScheduled: false,
         PREFIX,
         clientIp: ip,

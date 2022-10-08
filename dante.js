@@ -470,7 +470,16 @@ const start = async () => {
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
-      const { phone, message, type, image, file, sender, PREFIX } = req.body;
+      const {
+        phone,
+        message,
+        notificationType,
+        type,
+        image,
+        file,
+        sender,
+        PREFIX,
+      } = req.body;
       const activeSession = await authenticate(req);
       if (!activeSession) {
         return res.status(403).json({ message: "Token invalid!" });
@@ -512,6 +521,7 @@ const start = async () => {
         sender: sender === "6283143574597" ? "6285157574640" : sender,
         phone: "",
         message,
+        notificationType,
         type,
         isScheduled: false,
         PREFIX,
