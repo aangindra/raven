@@ -10,7 +10,7 @@ const fs = require("fs");
 const uuidV4 = require("uuid/v4");
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const shell = require("shelljs");
-const { sample } = require("lodash");
+const { get, sample, keyBy } = require("lodash");
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
@@ -26,7 +26,8 @@ const {
   buildSession,
 } = require("./baileys");
 const utils = require("./libs/utils");
-const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
+const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET, VERSION_APP } =
+  process.env;
 const { calculateMessage } = require("./calculate_message");
 const path = require("path");
 const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
@@ -66,6 +67,15 @@ const browserArgs = [
   "--ignore-ssl-errors",
   "--ignore-certificate-errors-spki-list",
 ];
+
+const LIST_NOTIFICATION_TYPE = {
+  GENERAL: "GENERAL",
+  OTP: "OTP",
+  PPDB: "PPDB",
+  EMPLOYEE_PRESENCE: "EMPLOYEE_PRESENCE",
+  STUDENT_PRESENCE: "STUDENT_PRESENCE",
+  STUDENT_BILL_PAYMENT: "FINANCE",
+};
 
 const start = async () => {
   if (!fs.existsSync(`./saved_sessions`)) {
@@ -127,7 +137,9 @@ const start = async () => {
   });
 
   app.get("/", async (req, res) => {
-    return res.status(200).json({ message: "Welcome to API Raven 1.0.0" });
+    return res
+      .status(200)
+      .json({ message: `Welcome to API Raven ${VERSION_APP || "1.0.0"}` });
   });
 
   app.post(
@@ -528,6 +540,12 @@ const start = async () => {
         _createdAt: dayjs().toISOString(),
         _updatedAt: dayjs().toISOString(),
       };
+
+      newMessage.sender = assignSenderByNotificationType({
+        devices: listDevices,
+        message: newMessage,
+      });
+
       if (type === "IMAGE" && image) {
         newMessage.image = image;
       } else if (type === "FILE" && file) {
@@ -582,6 +600,42 @@ const generatedLoadBalanceMessage = ({ message, devices }) => {
     result.sender = sample(loadBalancedSender);
   }
   return result;
+};
+
+const assignSenderByNotificationType = ({ devices, message }) => {
+  const indexedSenderByPhone = keyBy(devices, "phone");
+  if (
+    indexedSenderByPhone[message.sender] &&
+    !indexedSenderByPhone[message.sender].isLoadBalancer
+  ) {
+    return message.sender;
+  }
+  const indexedSenderByNotificationType = devices.reduce((acc, device) => {
+    if (device.notificationType) {
+      for (let type of device.notificationType) {
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(device.phone);
+      }
+    }
+    return acc;
+  }, {});
+
+  const notificationType = get(
+    LIST_NOTIFICATION_TYPE,
+    message.notificationType
+  );
+
+  if (
+    !notificationType ||
+    !indexedSenderByNotificationType[notificationType] ||
+    indexedSenderByNotificationType[notificationType].length === 0
+  ) {
+    return message.sender;
+  }
+
+  return sample(indexedSenderByNotificationType[message.notificationType]);
 };
 
 start();
