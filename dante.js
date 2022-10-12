@@ -636,11 +636,16 @@ const assignSenderByNotificationType = ({ devices, message }) => {
     "indexedSenderByNotificationType",
     indexedSenderByNotificationType[notificationType]
   );
-  if (
-    !notificationType ||
-    !indexedSenderByNotificationType[notificationType] ||
-    indexedSenderByNotificationType[notificationType].length === 0
-  ) {
+  if (!notificationType || !indexedSenderByNotificationType[notificationType]) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer
+    );
+    return message.sender;
+  }
+
+  if (indexedSenderByNotificationType[notificationType].length === 0) {
     console.log(
       "sender is not changing",
       message.sender,
