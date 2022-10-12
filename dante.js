@@ -608,6 +608,11 @@ const assignSenderByNotificationType = ({ devices, message }) => {
     indexedSenderByPhone[message.sender] &&
     !indexedSenderByPhone[message.sender].isLoadBalancer
   ) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer
+    );
     return message.sender;
   }
   const indexedSenderByNotificationType = devices.reduce((acc, device) => {
@@ -626,16 +631,26 @@ const assignSenderByNotificationType = ({ devices, message }) => {
     LIST_NOTIFICATION_TYPE,
     message.notificationType
   );
-
+  console.log("notificationType", notificationType);
+  console.log(
+    "indexedSenderByNotificationType",
+    indexedSenderByNotificationType[notificationType]
+  );
   if (
     !notificationType ||
     !indexedSenderByNotificationType[notificationType] ||
     indexedSenderByNotificationType[notificationType].length === 0
   ) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer,
+      indexedSenderByNotificationType[notificationType].length
+    );
     return message.sender;
   }
 
-  return sample(indexedSenderByNotificationType[message.notificationType]);
+  return sample(indexedSenderByNotificationType[notificationType]);
 };
 
 start();
