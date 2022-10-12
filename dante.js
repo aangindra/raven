@@ -557,10 +557,10 @@ const start = async () => {
       const phones = phone.split(",");
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
-        newMessage = generatedLoadBalanceMessage({
-          message: newMessage,
-          devices: listDevices,
-        });
+        // newMessage = generatedLoadBalanceMessage({
+        //   message: newMessage,
+        //   devices: listDevices,
+        // });
         await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
