@@ -631,6 +631,7 @@ const assignSenderByNotificationType = ({ devices, message }) => {
     LIST_NOTIFICATION_TYPE,
     message.notificationType
   );
+  console.log("message", message);
   console.log("notificationType", notificationType);
   console.log(
     "indexedSenderByNotificationType",
