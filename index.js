@@ -12,6 +12,7 @@ const { body: bodyValidator, validationResult } = require("express-validator");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { get, sample, keyBy } = require("lodash");
 const shell = require("shelljs");
 const { verifyToken, authenticate } = require("./auth/verifyToken");
 const Pusher = require("pusher");
@@ -21,6 +22,15 @@ const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
   ? process.env.SENDER_LOAD_BALANCE
   : "";
+
+const LIST_NOTIFICATION_TYPE = {
+  GENERAL: "GENERAL",
+  OTP: "OTP",
+  PPDB: "PPDB",
+  EMPLOYEE_PRESENCE: "EMPLOYEE_PRESENCE",
+  STUDENT_PRESENCE: "STUDENT_PRESENCE",
+  STUDENT_BILL_PAYMENT: "FINANCE",
+};
 
 const start = async () => {
   const pusher = new Pusher({
@@ -342,6 +352,12 @@ const start = async () => {
         _createdAt: dayjs().toISOString(),
         _updatedAt: dayjs().toISOString(),
       };
+
+      newMessage.sender = assignSenderByNotificationType({
+        devices: listDevices,
+        message: newMessage,
+      });
+
       if (type === "IMAGE" && image) {
         newMessage.image = image;
       } else if (type === "FILE" && file) {
@@ -353,10 +369,10 @@ const start = async () => {
       const phones = phone.split(",");
       for (let number of phones) {
         newMessage.phone = number.replace(/[^0-9.]/g, "");
-        newMessage = generatedLoadBalanceMessage({
-          message: newMessage,
-          devices: listDevices,
-        });
+        // newMessage = generatedLoadBalanceMessage({
+        //   message: newMessage,
+        //   devices: listDevices,
+        // });
         await collection("Messages").insertOne(newMessage);
       }
       let results = await calculateMessage(collection);
@@ -421,6 +437,65 @@ const generatedLoadBalanceMessage = ({ message, devices }) => {
     result.sender = sample(loadBalancedSender);
   }
   return result;
+};
+
+const assignSenderByNotificationType = ({ devices, message }) => {
+  const indexedSenderByPhone = keyBy(devices, "phone");
+  if (
+    indexedSenderByPhone[message.sender] &&
+    !indexedSenderByPhone[message.sender].isLoadBalancer
+  ) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer
+    );
+    return message.sender;
+  }
+  const indexedSenderByNotificationType = devices
+    .filter((device) => device.isLoadBalancer)
+    .reduce((acc, device) => {
+      if (device.notificationType) {
+        for (let type of device.notificationType) {
+          if (!acc[type]) {
+            acc[type] = [];
+          }
+          acc[type].push(device.phone);
+        }
+      }
+      return acc;
+    }, {});
+
+  const notificationType = get(
+    LIST_NOTIFICATION_TYPE,
+    message.notificationType
+  );
+  console.log("message", message);
+  console.log("notificationType", notificationType);
+  console.log(
+    "indexedSenderByNotificationType",
+    indexedSenderByNotificationType[notificationType]
+  );
+  if (!notificationType || !indexedSenderByNotificationType[notificationType]) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer
+    );
+    return message.sender;
+  }
+
+  if (indexedSenderByNotificationType[notificationType].length === 0) {
+    console.log(
+      "sender is not changing",
+      message.sender,
+      indexedSenderByPhone[message.sender].isLoadBalancer,
+      indexedSenderByNotificationType[notificationType].length
+    );
+    return message.sender;
+  }
+
+  return sample(indexedSenderByNotificationType[notificationType]);
 };
 
 const base64Encode = (file) => {
