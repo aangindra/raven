@@ -615,17 +615,19 @@ const assignSenderByNotificationType = ({ devices, message }) => {
     );
     return message.sender;
   }
-  const indexedSenderByNotificationType = devices.reduce((acc, device) => {
-    if (device.notificationType) {
-      for (let type of device.notificationType) {
-        if (!acc[type]) {
-          acc[type] = [];
+  const indexedSenderByNotificationType = devices
+    .filter((device) => device.isLoadBalancer)
+    .reduce((acc, device) => {
+      if (device.notificationType) {
+        for (let type of device.notificationType) {
+          if (!acc[type]) {
+            acc[type] = [];
+          }
+          acc[type].push(device.phone);
         }
-        acc[type].push(device.phone);
       }
-    }
-    return acc;
-  }, {});
+      return acc;
+    }, {});
 
   const notificationType = get(
     LIST_NOTIFICATION_TYPE,
