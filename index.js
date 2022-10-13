@@ -322,9 +322,16 @@ const start = async () => {
       });
       const listDevices = await collection("Devices")
         .find({
-          accountIds: {
-            $in: [foundAccount._id],
-          },
+          $or: [
+            {
+              accountIds: {
+                $in: [foundAccount._id],
+              },
+            },
+            {
+              accountId: foundAccount.username,
+            },
+          ],
         })
         .toArray();
       const devices = listDevices.map((device) => device.phone);
