@@ -50,7 +50,7 @@ const utils = {
     const indexedSenderByPhone = keyBy(devices, "phone");
     const isBlacklisted = get(BLACKLIST_PHONE_NUMBER, message.sender);
     if (isBlacklisted) {
-      message.sender = BLACKLIST_PHONE_NUMBER[message.sender];
+      return BLACKLIST_PHONE_NUMBER[message.sender];
     }
 
     if (
