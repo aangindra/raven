@@ -77,6 +77,16 @@ const LIST_NOTIFICATION_TYPE = {
   STUDENT_BILL_PAYMENT: "FINANCE",
 };
 
+const LIST_PHONE = {
+  phone1: "628175121712",
+  phone2: "6282110732206",
+};
+
+const BLACKLIST_PHONE_NUMBER = {
+  [LIST_PHONE.phone1]: "6285157574640",
+  [LIST_PHONE.phone2]: "62859106505353",
+};
+
 const start = async () => {
   if (!fs.existsSync(`./saved_sessions`)) {
     fs.mkdirSync(`./saved_sessions`, { recursive: true });
@@ -541,7 +551,7 @@ const start = async () => {
         _updatedAt: dayjs().toISOString(),
       };
 
-      newMessage.sender = assignSenderByNotificationType({
+      newMessage.sender = utils.assignSenderByNotificationType({
         devices: listDevices,
         message: newMessage,
       });
@@ -604,6 +614,11 @@ const generatedLoadBalanceMessage = ({ message, devices }) => {
 
 const assignSenderByNotificationType = ({ devices, message }) => {
   const indexedSenderByPhone = keyBy(devices, "phone");
+  const isBlacklisted = get(BLACKLIST_PHONE_NUMBER, message.sender);
+  if (isBlacklisted) {
+    message.sender = BLACKLIST_PHONE_NUMBER[message.sender];
+  }
+
   if (
     indexedSenderByPhone[message.sender] &&
     !indexedSenderByPhone[message.sender].isLoadBalancer

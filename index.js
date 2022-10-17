@@ -17,6 +17,7 @@ const shell = require("shelljs");
 const { verifyToken, authenticate } = require("./auth/verifyToken");
 const Pusher = require("pusher");
 const { calculateMessage } = require("./calculate_message");
+const utils = require("./libs/utils");
 const { PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
 const SECRET_KEY = process.env.SECRET_KEY ? process.env.SECRET_KEY : uuidV4();
 const SENDER_LOAD_BALANCE = process.env.SENDER_LOAD_BALANCE
@@ -360,7 +361,7 @@ const start = async () => {
         _updatedAt: dayjs().toISOString(),
       };
 
-      newMessage.sender = assignSenderByNotificationType({
+      newMessage.sender = utils.assignSenderByNotificationType({
         devices: listDevices,
         message: newMessage,
       });
