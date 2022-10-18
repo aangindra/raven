@@ -1,6 +1,6 @@
 require("dotenv").config();
 const fs = require("fs");
-const venom = require("venom-bot");
+// const venom = require("venom-bot");
 const { existsSync, mkdirSync } = require("fs");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -66,106 +66,106 @@ const start = async () => {
   app.get("/", async (req, res) => {
     return res.status(200).json({ message: "Welcome to API Raven 1.0.0" });
   });
-  app.post(
-    "/login_whatsapp",
-    verifyToken,
-    [
-      bodyValidator("session")
-        .notEmpty()
-        .withMessage("session cannot be empty!"),
-    ],
-    async (req, res) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-      console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login");
-      const { session } = req.body;
-      try {
-        const venomOptions = {
-          multidevice: false,
-          folderNameToken: "tokens",
-          mkdirFolderToken: "",
-          headless: true,
-          devtools: false,
-          useChrome: true,
-          debug: false,
-          logQR: false,
-          browserArgs: ["--no-sandbox"],
-          refreshQR: 15000,
-          autoClose: false,
-          disableSpins: true,
-          disableWelcome: true,
-          // createFileToken: true,
-        };
-        const client = await new Promise((resolve, reject) => {
-          venom
-            .create(
-              session,
-              (base64Qr, asciiQR) => {
-                if (!existsSync(`./log_qr`)) {
-                  mkdirSync(`./log_qr`, { recursive: true });
-                }
-                exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
-                resolve(base64Qr);
-              },
-              async (statusSession) => {
-                if (statusSession === "isLogged") {
-                  resolve(statusSession);
-                } else if (statusSession === "qrReadSuccess") {
-                  await collection("Devices").updateOne(
-                    {
-                      phone: session,
-                    },
-                    {
-                      $set: {
-                        status: "CONNECTED",
-                      },
-                    }
-                  );
-                  shell.exec(`pm2 reload wa-${session}`);
-                  resolve(statusSession);
-                }
-              },
-              venomOptions,
-              (browser, waPage) => {
-                console.log("Browser PID:", browser.process().pid);
-                waPage.screenshot({ path: "screenshot.png" });
-              }
-            )
-            .then(async (callback) => {
-              const token = await callback.getSessionTokenBrowser();
-              fs.writeFileSync(
-                `${__dirname + "/saved_tokens/" + session}.data.json`,
-                JSON.stringify(token)
-              );
-            });
-        });
-        if (client === "isLogged") {
-          await collection("Devices").updateOne(
-            {
-              phone: session,
-            },
-            {
-              $set: {
-                status: "CONNECTED",
-              },
-            }
-          );
-          return res
-            .status(200)
-            .json({ message: "Success login!", status: client, qrCode: "" });
-        }
-        return res.status(200).json({
-          message: "Success login!",
-          status: "notLogged",
-          qrCode: client,
-        });
-      } catch (e) {
-        console.log(e);
-      }
-    }
-  );
+  // app.post(
+  //   "/login_whatsapp",
+  //   verifyToken,
+  //   [
+  //     bodyValidator("session")
+  //       .notEmpty()
+  //       .withMessage("session cannot be empty!"),
+  //   ],
+  //   async (req, res) => {
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) {
+  //       return res.status(400).json({ errors: errors.array() });
+  //     }
+  //     console.log(dayjs().format("YYYY-MM-DD HH:mm:ss"), " ", "POST /login");
+  //     const { session } = req.body;
+  //     try {
+  //       const venomOptions = {
+  //         multidevice: false,
+  //         folderNameToken: "tokens",
+  //         mkdirFolderToken: "",
+  //         headless: true,
+  //         devtools: false,
+  //         useChrome: true,
+  //         debug: false,
+  //         logQR: false,
+  //         browserArgs: ["--no-sandbox"],
+  //         refreshQR: 15000,
+  //         autoClose: false,
+  //         disableSpins: true,
+  //         disableWelcome: true,
+  //         // createFileToken: true,
+  //       };
+  //       const client = await new Promise((resolve, reject) => {
+  //         venom
+  //           .create(
+  //             session,
+  //             (base64Qr, asciiQR) => {
+  //               if (!existsSync(`./log_qr`)) {
+  //                 mkdirSync(`./log_qr`, { recursive: true });
+  //               }
+  //               exportQR(base64Qr, `log_qr/qrCode_${session}.png`);
+  //               resolve(base64Qr);
+  //             },
+  //             async (statusSession) => {
+  //               if (statusSession === "isLogged") {
+  //                 resolve(statusSession);
+  //               } else if (statusSession === "qrReadSuccess") {
+  //                 await collection("Devices").updateOne(
+  //                   {
+  //                     phone: session,
+  //                   },
+  //                   {
+  //                     $set: {
+  //                       status: "CONNECTED",
+  //                     },
+  //                   }
+  //                 );
+  //                 shell.exec(`pm2 reload wa-${session}`);
+  //                 resolve(statusSession);
+  //               }
+  //             },
+  //             venomOptions,
+  //             (browser, waPage) => {
+  //               console.log("Browser PID:", browser.process().pid);
+  //               waPage.screenshot({ path: "screenshot.png" });
+  //             }
+  //           )
+  //           .then(async (callback) => {
+  //             const token = await callback.getSessionTokenBrowser();
+  //             fs.writeFileSync(
+  //               `${__dirname + "/saved_tokens/" + session}.data.json`,
+  //               JSON.stringify(token)
+  //             );
+  //           });
+  //       });
+  //       if (client === "isLogged") {
+  //         await collection("Devices").updateOne(
+  //           {
+  //             phone: session,
+  //           },
+  //           {
+  //             $set: {
+  //               status: "CONNECTED",
+  //             },
+  //           }
+  //         );
+  //         return res
+  //           .status(200)
+  //           .json({ message: "Success login!", status: client, qrCode: "" });
+  //       }
+  //       return res.status(200).json({
+  //         message: "Success login!",
+  //         status: "notLogged",
+  //         qrCode: client,
+  //       });
+  //     } catch (e) {
+  //       console.log(e);
+  //     }
+  //   }
+  // );
   app.post(
     "/register",
     [
