@@ -49,8 +49,9 @@ const utils = {
   assignSenderByNotificationType: ({ devices, message }) => {
     const indexedSenderByPhone = keyBy(devices, "phone");
     const isBlacklisted = get(BLACKLIST_PHONE_NUMBER, message.sender);
+    console.log("isBlacklisted", isBlacklisted);
     if (isBlacklisted) {
-      return BLACKLIST_PHONE_NUMBER[message.sender];
+      return isBlacklisted;
     }
 
     if (
