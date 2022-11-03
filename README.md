@@ -39,7 +39,7 @@ ln -s ../api/log_qr
 
 ```sh
 pm2 delete --silent api
-pm2 start -n api index.js --silent
+pm2 start -n api-whatsapp-gateway dante.js --silent
 ```
 
 ##### SETUP SENDER WA GATEWAY
