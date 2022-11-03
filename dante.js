@@ -530,6 +530,9 @@ const start = async () => {
               accountId: foundAccount.username,
             },
           ],
+          _deletedAt: {
+            $exists: false,
+          },
         })
         .toArray();
       const devices = listDevices.map((device) => device.phone);
