@@ -80,11 +80,15 @@ const LIST_NOTIFICATION_TYPE = {
 const LIST_PHONE = {
   phone1: "628175121712",
   phone2: "6282110732206",
+  phone3: "6283143574597",
+  phone4: "6283179715536",
 };
 
 const BLACKLIST_PHONE_NUMBER = {
   [LIST_PHONE.phone1]: "6285157574640",
   [LIST_PHONE.phone2]: "62859106505353",
+  [LIST_PHONE.phone3]: "6285157574640",
+  [LIST_PHONE.phone4]: "6281216568005",
 };
 
 const start = async () => {
@@ -542,7 +546,8 @@ const start = async () => {
 
       let newMessage = {
         _id: uuidV4(),
-        sender: sender === "6283143574597" ? "6285157574640" : sender,
+        sender: get(BLACKLIST_PHONE_NUMBER, sender, sender),
+        // sender: sender === "6283143574597" ? "6285157574640" : sender,
         phone: "",
         message,
         notificationType,
