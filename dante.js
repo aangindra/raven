@@ -350,6 +350,8 @@ const start = async () => {
             text: payload.message,
           });
         }
+        let results = await calculateMessage(collection);
+        pusher.trigger("whatsapp-gateway", "message", results);
       } else {
         console.log("Whatsapp not connected!");
         return res.status(200).json({
