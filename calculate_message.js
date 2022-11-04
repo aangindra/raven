@@ -1,13 +1,15 @@
 const dayjs = require("dayjs");
 
 const calculateMessage = async (collection) => {
-  const startDate = dayjs().startOf("day").toISOString();
-  const endDate = dayjs().endOf("day").toISOString();
+  let startDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+  startDate = `${startDate}T17:00:00.000Z`;
+  let endDate = dayjs().format("YYYY-MM-DD");
+  endDate = `${endDate}T16:59:59.999Z`;
 
   const countAllMessages = await collection("Messages")
     .find({
       type: {
-        $ne: "AUTOREPLY"
+        $ne: "AUTOREPLY",
       },
       _deletedAt: {
         $exists: false,
@@ -21,7 +23,7 @@ const calculateMessage = async (collection) => {
   const countAllErrorMessages = await collection("Messages")
     .find({
       type: {
-        $ne: "AUTOREPLY"
+        $ne: "AUTOREPLY",
       },
       $or: [
         {
@@ -47,7 +49,7 @@ const calculateMessage = async (collection) => {
   const countAllSentMessages = await collection("Messages")
     .find({
       type: {
-        $ne: "AUTOREPLY"
+        $ne: "AUTOREPLY",
       },
       sentAt: {
         $exists: true,
@@ -64,7 +66,7 @@ const calculateMessage = async (collection) => {
   const countAllPendingMessages = await collection("Messages")
     .find({
       type: {
-        $ne: "AUTOREPLY"
+        $ne: "AUTOREPLY",
       },
       sentAt: {
         $exists: false,
@@ -81,12 +83,12 @@ const calculateMessage = async (collection) => {
       },
     })
     .count();
-    console.log({
-      countAllMessages,
-      countAllSentMessages,
-      countAllErrorMessages,
-      countAllPendingMessages,
-    })
+  console.log({
+    countAllMessages,
+    countAllSentMessages,
+    countAllErrorMessages,
+    countAllPendingMessages,
+  });
   return {
     countAllMessages,
     countAllSentMessages,
