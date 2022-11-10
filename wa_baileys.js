@@ -1,11 +1,10 @@
 require("dotenv").config();
-const { Client, LegacySessionAuth, NoAuth, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const dayjs = require("dayjs");
 const schedule = require("node-schedule");
 const fs = require("fs");
-const mime = require('mime');
-const fetch = require('node-fetch');
-const { URL } = require('url');
+const mime = require("mime");
+const fetch = require("node-fetch");
+const { URL } = require("url");
 const uuidV4 = require("uuid/v4");
 const { isEmpty } = require("lodash");
 const path = require("path");
@@ -15,7 +14,13 @@ const WA_SESSION = process.env.WA_SESSION ? process.env.WA_SESSION : "default0";
 const mongodbConnection = require("./mongodb_connection");
 const { initRedis } = require("./redisCache");
 const Pusher = require("pusher");
-const { RAVEN_API_HOST, RAVEN_TOKEN, PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET } = process.env;
+const {
+  RAVEN_API_HOST,
+  RAVEN_TOKEN,
+  PUSHER_APP_ID,
+  PUSHER_APP_KEY,
+  PUSHER_APP_SECRET,
+} = process.env;
 const { calculateMessage } = require("./calculate_message");
 const {
   createSession,
@@ -23,15 +28,32 @@ const {
   getSession,
   deleteSession,
   isExists,
-} = require('./baileys');
+} = require("./baileys");
 const browserArgs = [
-  '--disable-web-security', '--no-sandbox', '--disable-web-security', '--disable-gpu',
-  '--aggressive-cache-discard', '--disable-cache', '--disable-application-cache',
-  '--disable-offline-load-stale-cache', '--disk-cache-size=0', '--disable-software-rasterizer',
-  '--disable-background-networking', '--disable-default-apps', '--disable-extensions',
-  '--disable-sync', '--disable-translate', '--hide-scrollbars', '--metrics-recording-only',
-  '--mute-audio', '--no-first-run', '--safebrowsing-disable-auto-update', '--disable-dev-shm-usage',
-  '--ignore-certificate-errors', '--ignore-ssl-errors', '--ignore-certificate-errors-spki-list'
+  "--disable-web-security",
+  "--no-sandbox",
+  "--disable-web-security",
+  "--disable-gpu",
+  "--aggressive-cache-discard",
+  "--disable-cache",
+  "--disable-application-cache",
+  "--disable-offline-load-stale-cache",
+  "--disk-cache-size=0",
+  "--disable-software-rasterizer",
+  "--disable-background-networking",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-sync",
+  "--disable-translate",
+  "--hide-scrollbars",
+  "--metrics-recording-only",
+  "--mute-audio",
+  "--no-first-run",
+  "--safebrowsing-disable-auto-update",
+  "--disable-dev-shm-usage",
+  "--ignore-certificate-errors",
+  "--ignore-ssl-errors",
+  "--ignore-certificate-errors-spki-list",
 ];
 
 const start = async () => {
@@ -44,7 +66,7 @@ const start = async () => {
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
 
-  schedule.scheduleJob("*/10 * * * * *", async () => {
+  schedule.scheduleJob("*/25 * * * * *", async () => {
     await sendMessage({ collection, cache });
     await sendMessageSchedule({ collection, cache });
   });
@@ -65,7 +87,7 @@ const sendMessage = async ({ collection, cache }) => {
     phone: 1,
     sentAt: 1,
     errorAt: 1,
-    _createdAt: -1
+    _createdAt: -1,
   });
 
   var cacheKeySenderLists = `WA_sender_lists`;
@@ -107,7 +129,7 @@ const sendMessage = async ({ collection, cache }) => {
         errorAt: {
           $exists: false,
         },
-      }
+      },
     ],
     _deletedAt: {
       $exists: false,
@@ -161,29 +183,31 @@ const sendMessage = async ({ collection, cache }) => {
         session: WA_SESSION,
         phone: foundMessage.phone,
         messageType: "INSTANT",
-        payload: foundMessage
+        payload: foundMessage,
       },
       {
         headers: {
-          Authorization: RAVEN_TOKEN
-        }
+          Authorization: RAVEN_TOKEN,
+        },
       }
     );
 
     // if (response.data.status === true) {
-    await collection("Messages").updateOne({
-      _id: foundMessage._id
-    }, {
-      $set: {
-        sentAt: new Date().toISOString(),
+    await collection("Messages").updateOne(
+      {
+        _id: foundMessage._id,
+      },
+      {
+        $set: {
+          sentAt: new Date().toISOString(),
+        },
       }
-    })
+    );
     stringResult = JSON.stringify(foundMessage);
     await cache.set(cacheKey, stringResult);
 
     // }
     // pusher.trigger("whatsapp-gateway", "message", calculate);
-
   } catch (e) {
     await collection("Messages").updateOne(
       {
@@ -309,27 +333,29 @@ const sendMessageSchedule = async ({ collection, cache }) => {
         session: WA_SESSION,
         phone: foundMessage.phone,
         messageType: "SCHEDULED",
-        payload: foundMessage
+        payload: foundMessage,
       },
       {
         headers: {
-          Authorization: RAVEN_TOKEN
-        }
+          Authorization: RAVEN_TOKEN,
+        },
       }
     );
 
     // if (response.data.status === true) {
-    await collection("ScheduleMessages").updateOne({
-      _id: foundMessage._id
-    }, {
-      $set: {
-        sentAt: new Date().toISOString(),
+    await collection("ScheduleMessages").updateOne(
+      {
+        _id: foundMessage._id,
+      },
+      {
+        $set: {
+          sentAt: new Date().toISOString(),
+        },
       }
-    })
+    );
     stringResult = JSON.stringify(foundMessage);
     await cache.set(cacheKey, stringResult);
     // }
-
   } catch (e) {
     await collection("ScheduleMessages").updateOne(
       {
