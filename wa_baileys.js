@@ -20,6 +20,7 @@ const {
   PUSHER_APP_ID,
   PUSHER_APP_KEY,
   PUSHER_APP_SECRET,
+  WHATSAPP_DELAY,
 } = process.env;
 const { calculateMessage } = require("./calculate_message");
 const {
@@ -62,11 +63,14 @@ const start = async () => {
   if (fs.existsSync(SESSION_FILE_PATH)) {
     sessionCfg = require(SESSION_FILE_PATH);
   }
-
+  let whatsappDelay = 25;
+  if (WHATSAPP_DELAY) {
+    whatsappDelay = parseInt(WHATSAPP_DELAY);
+  }
   const collection = await mongodbConnection("WA");
   const { cache } = await initRedis();
 
-  schedule.scheduleJob("*/25 * * * * *", async () => {
+  schedule.scheduleJob(`*/${whatsappDelay} * * * * *`, async () => {
     await sendMessage({ collection, cache });
     await sendMessageSchedule({ collection, cache });
   });
