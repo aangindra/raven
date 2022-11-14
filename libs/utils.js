@@ -15,6 +15,8 @@ const LIST_PHONE = {
   phone3: "6283143574597",
   phone4: "6283179715536",
   phone5: "62859106505353",
+  phone6: "6285648039968",
+  phone7: "628175121712",
 };
 
 const BLACKLIST_PHONE_NUMBER = {
@@ -23,6 +25,8 @@ const BLACKLIST_PHONE_NUMBER = {
   [LIST_PHONE.phone3]: "6285157574640",
   [LIST_PHONE.phone4]: "6285157574640",
   [LIST_PHONE.phone5]: "6285157574640",
+  [LIST_PHONE.phone6]: "6285157574640",
+  [LIST_PHONE.phone7]: "6285157574640",
 };
 
 const utils = {
